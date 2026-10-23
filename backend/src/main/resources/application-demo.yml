@@ -1,0 +1,2 @@
+app:
+  db-name: ${DB_NAME:stationery}

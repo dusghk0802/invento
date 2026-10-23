@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: invento
+  config:
+    # 로컬 비밀값(DB_PASSWORD 등)은 backend/.env 에 둔다 (git 제외)
+    import: optional:file:.env[.properties]
+
+  mvc:
+    # 오류를 표준 JSON(ProblemDetail)으로 응답
+    problemdetails:
+      enabled: true
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${app.db-name}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${DB_USERNAME:invento_app}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Seoul
+        format_sql: true
+        type:
+          # boolean 필드를 DB에 tinyint(0/1)로 저장
+          preferred_boolean_jdbc_type: TINYINT
+
+app:
+  db-name: ${DB_NAME:goods}
+
+logging:
+  level:
+    org.hibernate.SQL: debug
