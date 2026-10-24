@@ -19,7 +19,7 @@ public class Series extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long seriesId;
 
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 20)
     private String seriesName;
 
     @Column(nullable = false)
