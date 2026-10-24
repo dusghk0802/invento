@@ -1,1 +1,95 @@
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ===== 디자인 토큰 (색상, 크기는 여기서만 바꾸면 전체에 반영) ===== */
+/* 스타일 참고: Zoho Inventory 앱 화면 (짙은 사이드바 + 빨간 선택 메뉴, 연한 회청색 배경, 파란 숫자·링크) */
+:root {
+  --color-bg: #f2f4f9;
+  --color-header: #f7f8fb;
+  --color-accent: var(--color-primary); /* 선택 메뉴, 아바타 등 */
+  --color-surface: #ffffff;
+  --color-surface-sub: #f9fafc;
+  --color-border: #e9e9f0;
+  --color-border-strong: #d5d7e0;
+
+  --color-text: #21263c;
+  --color-text-sub: #6c718a;
+  --color-text-weak: #9ea2b5;
+
+  /* 버튼·링크·포커스 등 강조색 = 빨강으로 통일 */
+  --color-primary: #e8453c;
+  --color-primary-hover: #d1362e;
+  --color-primary-weak: #fdeceb;
+  --color-danger: #e5484d;
+  --color-danger-weak: #fdeeee;
+  --color-success: #1f9d55;
+  --color-success-weak: #e8f6ee;
+  --color-warning: #e08a00;
+  --color-warning-weak: #fff4e0;
+
+  --sidebar-bg: #1f2433;
+  --sidebar-text: #d7dae3;
+  --sidebar-muted: #8c91a4;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --shadow-sm: 0 1px 2px rgb(33 38 60 / 0.04);
+  --shadow-lg: 0 12px 32px rgb(33 38 60 / 0.18);
+
+  --sidebar-width: 220px;
+  --header-height: 56px;
+}
+
+/* ===== 기본 초기화 ===== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body, #root { height: 100%; }
+
+body {
+  font-family: 'Pretendard Variable', Pretendard, -apple-system, 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: inherit; text-decoration: none; }
+ul, ol { list-style: none; }
+
+/* ===== 페이지 공통 (컴포넌트 외 스타일은 전부 여기) ===== */
+.page-section { margin-bottom: 28px; }
+.section-title { font-size: 16px; font-weight: 600; color: var(--color-text); }
+
+/* ===== 로그인 ===== */
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  padding: 16px;
+  background: var(--sidebar-bg);
+}
+
+.login-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 360px;
+  padding: 32px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-heading { margin-bottom: 8px; text-align: center; }
+.login-logo { font-size: 24px; font-weight: 700; }
+.login-subtitle { margin-top: 4px; font-size: 13px; color: var(--color-text-sub); }
+
+.login-error {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-weak);
+  font-size: 13px;
+  color: var(--color-danger);
+}
