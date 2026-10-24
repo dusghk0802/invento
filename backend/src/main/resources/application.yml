@@ -1,14 +1,16 @@
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+
 spring:
-  server:
-    servlet:
-      session:
-        cookie:
-          same-site: lax
   application:
     name: invento
   config:
-    # 로컬 비밀값(DB_PASSWORD 등)은 backend/.env 에 둔다 (git 제외)
-    import: optional:file:.env[.properties]
+    # 로컬 비밀값(DB_PASSWORD 등)은 Invento/.env 에 둔다 (git 제외)
+    # 작업 디렉터리가 Invento든 backend든 찾을 수 있게 두 경로 모두 지정
+    import: optional:file:.env[.properties],optional:file:../.env[.properties]
 
   mvc:
     # 오류를 표준 JSON(ProblemDetail)으로 응답
