@@ -1,4 +1,9 @@
 spring:
+  server:
+    servlet:
+      session:
+        cookie:
+          same-site: lax
   application:
     name: invento
   config:
@@ -30,7 +35,12 @@ spring:
 
 app:
   db-name: ${DB_NAME:goods}
+  admin:
+    login-id: ${ADMIN_LOGIN_ID}
+    password: ${ADMIN_PASSWORD}
 
 logging:
   level:
     org.hibernate.SQL: debug
+
+
