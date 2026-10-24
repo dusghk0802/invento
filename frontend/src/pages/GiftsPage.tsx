@@ -1,6 +1,6 @@
-import { Badge, Button, PageHeader, Table, Toolbar, type Column } from '../../components/ui'
-import { useIsSuper } from '../../lib/auth'
-import { won } from '../../lib/format'
+import { Badge, Button, PageHeader, Table, Toolbar, type Column } from '../components/ui'
+import { useIsSuper } from '../lib/auth'
+import { won } from '../lib/format'
 
 // 증정품 = 특전(products.item_kind=SPECIAL_GIFT). 판매도 하고 증정도 함
 type Gift = {

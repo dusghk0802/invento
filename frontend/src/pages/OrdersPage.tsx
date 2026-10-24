@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
-import { Badge, Button, PageHeader, Table, type Column } from '../../components/ui'
-import { orderNo, tagTone, won } from '../../lib/format'
+import { Badge, Button, PageHeader, Table, type Column } from '../components/ui'
+import { orderNo, tagTone, won } from '../lib/format'
 
 // 주문 목록 API 응답 모양 (주문 백엔드에서 이 형태로 만들 예정)
 export type Order = {

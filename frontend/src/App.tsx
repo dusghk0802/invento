@@ -2,12 +2,12 @@ import { Navigate, Route, Routes } from 'react-router'
 import AppLayout from './components/layout/AppLayout'
 import { Card, PageHeader } from './components/ui'
 import LoginPage from './pages/LoginPage'
-import GiftsPage from './pages/gifts/GiftsPage'
-import GroupBuyDetailPage from './pages/group-buys/GroupBuyDetailPage'
-import GroupBuysPage from './pages/group-buys/GroupBuysPage'
-import OrderDetailPage from './pages/orders/OrderDetailPage'
-import OrdersPage from './pages/orders/OrdersPage'
-import ProductsPage from './pages/products/ProductsPage'
+import GiftsPage from './pages/GiftsPage'
+import GroupBuyDetailPage from './pages/GroupBuyDetailPage'
+import GroupBuysPage from './pages/GroupBuysPage'
+import OrderDetailPage from './pages/OrderDetailPage'
+import OrdersPage from './pages/OrdersPage'
+import ProductsPage from './pages/ProductsPage'
 
 export default function App() {
   return (

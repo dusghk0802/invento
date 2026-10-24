@@ -1,4 +1,4 @@
-import styles from './Switch.module.css'
+import styles from './ui.module.css'
 
 type Props = {
   checked: boolean
@@ -15,10 +15,10 @@ export default function Switch({ checked, onChange, disabled, label }: Props) {
       aria-checked={checked}
       aria-label={label}
       disabled={disabled}
-      className={`${styles.switch} ${checked ? styles.on : ''}`}
+      className={`${styles.switch} ${checked ? styles.switchOn : ''}`}
       onClick={() => onChange(!checked)}
     >
-      <span className={styles.thumb} />
+      <span className={styles.switchThumb} />
     </button>
   )
 }

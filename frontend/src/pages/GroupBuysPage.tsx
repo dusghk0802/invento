@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
-import { Badge, Button, PageHeader, Table, type Column } from '../../components/ui'
-import { tagTone } from '../../lib/format'
+import { Badge, Button, PageHeader, Table, type Column } from '../components/ui'
+import { tagTone } from '../lib/format'
 
 // 공동구매 목록 API 응답 모양
 export type GroupBuy = {

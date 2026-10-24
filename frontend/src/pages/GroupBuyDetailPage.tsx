@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
-import { Badge, Button, Card, InfoGrid, PageHeader, Table, Toolbar, type Column } from '../../components/ui'
-import { tagTone, won } from '../../lib/format'
+import { Badge, Button, Card, InfoGrid, PageHeader, Table, Toolbar, type Column } from '../components/ui'
+import { tagTone, won } from '../lib/format'
 import type { GroupBuy } from './GroupBuysPage'
 
 // 공동구매 주문서 API 응답 모양 (2차금은 소수점 있음)

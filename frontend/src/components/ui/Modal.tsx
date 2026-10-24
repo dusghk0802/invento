@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
-import styles from './Modal.module.css'
+import styles from './ui.module.css'
 
 type Props = {
   open: boolean
@@ -30,12 +30,12 @@ export default function Modal({ open, title, onClose, children, footer, width = 
     >
       {open && (
         <>
-          <div className={styles.header}>
-            <h2 className={styles.title}>{title}</h2>
-            <button type="button" className={styles.close} onClick={onClose} aria-label="닫기">×</button>
+          <div className={styles.modalHeader}>
+            <h2 className={styles.modalTitle}>{title}</h2>
+            <button type="button" className={styles.modalClose} onClick={onClose} aria-label="닫기">×</button>
           </div>
-          <div className={styles.body}>{children}</div>
-          {footer && <div className={styles.footer}>{footer}</div>}
+          <div className={styles.modalBody}>{children}</div>
+          {footer && <div className={styles.modalFooter}>{footer}</div>}
         </>
       )}
     </dialog>

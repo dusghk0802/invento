@@ -1,5 +1,5 @@
 import { useId, type SelectHTMLAttributes } from 'react'
-import styles from './Field.module.css'
+import styles from './ui.module.css'
 
 type Option = { value: string | number; label: string }
 
@@ -17,7 +17,7 @@ export default function Select({ label, error, options, placeholder, id, classNa
   return (
     <div className={styles.field}>
       {label && (
-        <label htmlFor={selectId} className={styles.label}>
+        <label htmlFor={selectId} className={styles.fieldLabel}>
           {label}
           {props.required && <span className={styles.required}>*</span>}
         </label>
@@ -28,7 +28,7 @@ export default function Select({ label, error, options, placeholder, id, classNa
           <option key={o.value} value={o.value}>{o.label}</option>
         ))}
       </select>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <p className={styles.fieldError}>{error}</p>}
     </div>
   )
 }

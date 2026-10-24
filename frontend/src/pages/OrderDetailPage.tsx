@@ -1,6 +1,6 @@
 import { useNavigate, useParams } from 'react-router'
-import { Button, Card, InfoGrid, PageHeader, Table, Toolbar, type Column } from '../../components/ui'
-import { orderNo, won } from '../../lib/format'
+import { Button, Card, InfoGrid, PageHeader, Table, Toolbar, type Column } from '../components/ui'
+import { orderNo, won } from '../lib/format'
 import type { Order } from './OrdersPage'
 
 // 주문한 상품 API 응답 모양

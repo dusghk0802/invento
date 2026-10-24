@@ -1,6 +1,6 @@
-import { Badge, Button, PageHeader, Table, type Column } from '../../components/ui'
-import { useIsSuper } from '../../lib/auth'
-import { won } from '../../lib/format'
+import { Badge, Button, PageHeader, Table, type Column } from '../components/ui'
+import { useIsSuper } from '../lib/auth'
+import { won } from '../lib/format'
 
 // 상품 API 응답 모양 (3단계 백엔드에서 이 형태로 만들 예정)
 type Product = {

@@ -1,4 +1,3 @@
-// import { Button, Input } from '../components/ui' 처럼 한 줄로 가져오기 위한 파일
 export { default as Badge } from './Badge'
 export { default as Button } from './Button'
 export { default as Card } from './Card'

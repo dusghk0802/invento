@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import styles from './Table.module.css'
+import styles from './ui.module.css'
 
 export type Column<T> = {
   key: string
@@ -23,7 +23,7 @@ export default function Table<T extends object>({ columns, rows, rowKey, loading
   const hasSummary = columns.some((c) => c.summary) && !!rows?.length
 
   return (
-    <div className={styles.wrapper}>
+    <div className={styles.tableWrapper}>
       <table className={styles.table}>
         <thead>
           <tr>
@@ -35,7 +35,7 @@ export default function Table<T extends object>({ columns, rows, rowKey, loading
         <tbody>
           {loading || !rows?.length ? (
             <tr>
-              <td colSpan={columns.length} className={styles.empty}>{loading ? '불러오는 중...' : emptyText}</td>
+              <td colSpan={columns.length} className={styles.tableEmpty}>{loading ? '불러오는 중...' : emptyText}</td>
             </tr>
           ) : (
             rows.map((row) => (
