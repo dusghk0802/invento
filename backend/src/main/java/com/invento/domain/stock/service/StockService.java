@@ -138,8 +138,8 @@ public class StockService {
                         .build()));
     }
 
-    // 직접 조정할 수 있는 위치: 사장=전체, 출고 직원=창고, 매장·창고 직원=담당 위치
-    private void checkLocation(Long locationId) {
+    // 직접 재고를 바꿀 수 있는 위치: 사장=전체, 출고 직원=창고, 매장·창고 직원=담당 위치 (입고·이동 처리에서도 사용)
+    public void checkLocation(Long locationId) {
         Admin admin = currentAdmin().orElseThrow(() -> new BusinessException(FORBIDDEN_LOCATION));
         Location location = locationRepo.getOrThrow(locationId);
         boolean allowed = switch (admin.getRole()) {

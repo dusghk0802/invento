@@ -6,7 +6,7 @@ import { useStockChannel, type StockLocation } from '../components/StockChannel'
 import { AdjustModal, HistoryModal } from '../components/StockModals'
 import { won } from '../lib/format'
 
-export type ItemKind = 'GOODS' | 'SPECIAL_GIFT'
+export type ItemKind = 'GOODS' | 'SPECIAL_GIFT' // 재고품 / 특전 (특전은 증정품 화면에서 관리)
 type Stock = { locationId: number; locationName: string; onHandQty: number; reservedQty: number; availableQty: number; minimumQty: number }
 type Product = {
   productId: number
@@ -28,8 +28,6 @@ type Product = {
 }
 type Series = { seriesId: number; seriesName: string; active: boolean }
 type ProductType = { productTypeId: number; productTypeName: string; active: boolean }
-const ITEM_KIND = { GOODS: '상품', SPECIAL_GIFT: '특전' }
-const toOptions = (o: Record<string, string>) => Object.entries(o).map(([value, label]) => ({ value, label }))
 
 const stockAt = (p: Product, locationId: number) => p.stocks.find((s) => s.locationId === locationId)
 const sumAt = (p: Product, locs: StockLocation[], key: 'onHandQty' | 'reservedQty' | 'availableQty') =>
@@ -38,11 +36,12 @@ const sumAt = (p: Product, locs: StockLocation[], key: 'onHandQty' | 'reservedQt
 const useList = <T,>(url: string) => useQuery({ queryKey: [url], queryFn: () => api.get<T[]>(url).then((r) => r.data) })
 
 export default function ProductsPage() {
-  return <ProductStockPage title="상품" />
+  return <ProductStockTable itemKind="GOODS" />
 }
 
-// 상품·증정품 화면 공통. itemKind를 주면 그 구분만 (증정품 = SPECIAL_GIFT)
-export function ProductStockPage({ title, itemKind }: { title: string; itemKind?: ItemKind }) {
+// 상품(재고품)·특전 재고 표 공통. section이면 화면 안의 한 구역으로 표시 (증정품 화면의 특전 표)
+export function ProductStockTable({ itemKind, section }: { itemKind: ItemKind; section?: boolean }) {
+  const noun = itemKind === 'GOODS' ? '상품' : '특전'
   // 사장·매장 직원은 필터로 창고/매장 표를 전환, 창고·출고 직원은 창고 표만
   const { me, isOwner, channel, channelLocations, adjustLocations, filter } = useStockChannel(['OWNER', 'STORE'])
   const canAdjust = isOwner || me?.role === 'STORE' || me?.role === 'WAREHOUSE'
@@ -65,8 +64,8 @@ export function ProductStockPage({ title, itemKind }: { title: string; itemKind?
 
   const common: Column<Product>[] = [
     { key: 'seriesName', title: '시리즈명', render: (p) => p.seriesName && <Badge tone="primary">{p.seriesName}</Badge> },
-    { key: 'productName', title: '상품명', render: (p) => <>{p.productName}{p.itemKind === 'SPECIAL_GIFT' && <> <Badge tone="warning">특전</Badge></>}</> },
-    { key: 'productCode', title: '상품번호' },
+    { key: 'productName', title: `${noun}명` },
+    { key: 'productCode', title: `${noun}번호` },
     { key: 'productTypeName', title: '상품종류', render: (p) => <Badge>{p.productTypeName}</Badge> },
   ]
 
@@ -124,10 +123,16 @@ export function ProductStockPage({ title, itemKind }: { title: string; itemKind?
 
   return (
     <>
-      <PageHeader title={title} actions={isOwner && <Button onClick={() => setEditing('new')}>+ 추가</Button>} />
+      {section ? (
+        <Toolbar actions={isOwner && <Button onClick={() => setEditing('new')}>+ 추가</Button>}>
+          <h2 className="section-title">증정 대상 재고 ({noun})</h2>
+        </Toolbar>
+      ) : (
+        <PageHeader title={noun} actions={isOwner && <Button onClick={() => setEditing('new')}>+ 추가</Button>} />
+      )}
       <Toolbar>
         {filter}
-        <input className="control-plain" placeholder="상품명·상품번호 검색" value={search.keyword}
+        <input className="control-plain" placeholder={`${noun}명·${noun}번호 검색`} value={search.keyword}
                onChange={(e) => setSearch({ ...search, keyword: e.target.value })} />
         <select className="control-plain" value={search.seriesId} onChange={(e) => setSearch({ ...search, seriesId: e.target.value })}>
           <option value="">전체 시리즈</option>
@@ -139,9 +144,9 @@ export function ProductStockPage({ title, itemKind }: { title: string; itemKind?
         </select>
       </Toolbar>
       <Table key={channel} columns={columns} rows={products.data} rowKey={(p) => p.productId} loading={products.isPending}
-             emptyText="등록된 상품이 없습니다." />
+             emptyText={`등록된 ${noun}이 없습니다.`} />
 
-      {editing && <ProductModal product={editing === 'new' ? null : editing} defaultKind={itemKind ?? 'GOODS'} series={series.data ?? []}
+      {editing && <ProductModal product={editing === 'new' ? null : editing} itemKind={itemKind} noun={noun} series={series.data ?? []}
                                 types={types.data ?? []} onClose={() => setEditing(null)} />}
       {adjusting && <AdjustModal name={adjusting.productName} stocks={adjusting.stocks} locations={adjustLocations}
                                  url="/stocks/adjust" target={{ productId: adjusting.productId }} invalidate="/products"
@@ -154,11 +159,11 @@ export function ProductStockPage({ title, itemKind }: { title: string; itemKind?
 const NEW = '__new__'
 
 // 상품 등록·수정 (사장만). 시리즈·상품종류는 목록에 없으면 "+ 새로 만들기"로 바로 추가
-function ProductModal({ product, defaultKind, series, types, onClose }: {
-  product: Product | null; defaultKind: ItemKind; series: Series[]; types: ProductType[]; onClose: () => void
+function ProductModal({ product, itemKind, noun, series, types, onClose }: {
+  product: Product | null; itemKind: ItemKind; noun: string; series: Series[]; types: ProductType[]; onClose: () => void
 }) {
   const [form, setForm] = useState({
-    itemKind: product?.itemKind ?? defaultKind,
+    itemKind: product?.itemKind ?? itemKind, // 구분은 화면으로 정해짐 (상품 화면 = 재고품, 증정품 화면 = 특전)
     productCode: product?.productCode ?? '',
     productName: product?.productName ?? '',
     seriesId: product?.seriesId ? String(product.seriesId) : '',
@@ -220,19 +225,18 @@ function ProductModal({ product, defaultKind, series, types, onClose }: {
   const error = save.error ?? remove.error ?? create.error
 
   return (
-    <Modal open width={560} title={product ? '상품 수정' : '상품 등록'} onClose={onClose}
+    <Modal open width={560} title={product ? `${noun} 수정` : `${noun} 등록`} onClose={onClose}
            footer={
              <>
                {product && <Button variant="ghost" style={{ marginRight: 'auto' }} disabled={remove.isPending}
-                                   onClick={() => window.confirm('이 상품을 삭제할까요?') && remove.mutate()}>삭제</Button>}
+                                   onClick={() => window.confirm(`이 ${noun}을 삭제할까요?`) && remove.mutate()}>삭제</Button>}
                <Button variant="secondary" onClick={onClose}>취소</Button>
                <Button type="submit" form="product-form" disabled={save.isPending}>저장</Button>
              </>
            }>
       <form id="product-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <Select label="구분" value={form.itemKind} onChange={(e) => set({ itemKind: e.target.value as ItemKind })} options={toOptions(ITEM_KIND)} />
-        <Input label="상품명" required maxLength={200} value={form.productName} onChange={(e) => set({ productName: e.target.value })} />
-        <Input label="상품번호" required maxLength={50} value={form.productCode} onChange={(e) => set({ productCode: e.target.value })} />
+        <Input label={`${noun}명`} required maxLength={200} value={form.productName} onChange={(e) => set({ productName: e.target.value })} />
+        <Input label={`${noun}번호`} required maxLength={50} value={form.productCode} onChange={(e) => set({ productCode: e.target.value })} />
         <Select label="시리즈" value={form.seriesId} placeholder="없음" onChange={(e) => pickOrCreate(e.target.value, 'series')}
                 options={[...series.filter((s) => s.active || String(s.seriesId) === form.seriesId)
                   .map((s) => ({ value: s.seriesId, label: s.seriesName })), { value: NEW, label: '+ 새로 만들기' }]} />

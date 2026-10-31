@@ -8,6 +8,8 @@ import GroupBuysPage from './pages/GroupBuysPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import OrdersPage from './pages/OrdersPage'
 import PackagingPage from './pages/PackagingPage'
+import ProductionOrderDetailPage from './pages/ProductionOrderDetailPage'
+import ProductionOrdersPage from './pages/ProductionOrdersPage'
 import LocationsPage from './pages/LocationsPage'
 import ProductsPage from './pages/ProductsPage'
 import SalesSitesPage from './pages/SalesSitesPage'
@@ -31,6 +33,8 @@ export default function App() {
         <Route path="packaging" element={<PackagingPage />} />
         <Route path="bulk-sales" element={<GroupBuysPage />} />
         <Route path="bulk-sales/:groupBuyId" element={<GroupBuyDetailPage />} />
+        <Route path="production-orders" element={<ProductionOrdersPage />} />
+        <Route path="production-orders/:productionOrderId" element={<ProductionOrderDetailPage />} />
 
         {/* 기준정보 */}
         <Route path="locations" element={<LocationsPage />} />

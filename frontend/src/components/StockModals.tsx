@@ -4,7 +4,7 @@ import { Button, Input, Modal, Select, Table, type Column } from './ui'
 import { api, getErrorMessage, queryClient } from '../lib/api'
 import type { StockLocation } from './StockChannel'
 
-const REASONS = { COUNT_DIFF: '실사 차이', DAMAGE: '파손', LOSS: '분실', TRANSFER_DIFF: '이동 수량 차이', ETC: '기타' }
+const REASONS = { COUNT_DIFF: '실사 차이', DAMAGE: '파손', DEFECT: '불량', LOSS: '분실', TRANSFER_DIFF: '이동 수량 차이', ETC: '기타' }
 const MOVEMENT = {
   PRODUCTION_IN: '공장 입고', TRANSFER_OUT: '매장 출고', TRANSFER_IN: '매장 입고', SALE_OUT: '판매', GIFT_OUT: '증정',
   RETURN_IN: '반품 입고', DISPOSAL: '폐기', PACKAGING_OUT: '포장재 사용', ADJUST: '재고 조정',

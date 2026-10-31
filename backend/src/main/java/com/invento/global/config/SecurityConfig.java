@@ -24,7 +24,7 @@ public class SecurityConfig {
     // 조회는 모든 직원, 등록·수정·삭제는 사장만
     private static final String[] OWNER_WRITE = {
             "/api/admin/products/**", "/api/admin/series/**", "/api/admin/product-types/**",
-            "/api/admin/gift-rules/**", "/api/admin/suppliers/**", "/api/admin/sales-sites/**",
+            "/api/admin/gift-rules/**", "/api/admin/sales-sites/**",
             "/api/admin/shipping-methods/**", "/api/admin/locations/**"
     };
 
@@ -36,6 +36,11 @@ public class SecurityConfig {
     // 포장재 관리 (목록·등록·수정·재고 조정): 사장 + 출고 직원
     private static final String[] PACKAGING = {
             "/api/admin/packaging/**", "/api/admin/stocks/packaging/**"
+    };
+
+    // 공장 발주·입고, 공급처 등록·수정: 사장 + 창고 직원 (입고 창고가 담당 창고인지는 StockService에서 확인)
+    private static final String[] PRODUCTION = {
+            "/api/admin/production-orders/**", "/api/admin/suppliers/**"
     };
 
     // 재고 조정·최소수량: 사장 + 매장·창고 직원 (자기 위치인지는 StockService에서 확인)
@@ -54,6 +59,8 @@ public class SecurityConfig {
                         .requestMatchers(OWNER_ONLY).hasRole("OWNER")
                         .requestMatchers(HttpMethod.GET, OWNER_WRITE).authenticated()
                         .requestMatchers(OWNER_WRITE).hasRole("OWNER")
+                        .requestMatchers(HttpMethod.GET, "/api/admin/suppliers/**").authenticated()
+                        .requestMatchers(PRODUCTION).hasAnyRole("OWNER", "WAREHOUSE")
                         .requestMatchers(PACKAGING).hasAnyRole("OWNER", "FULFILLMENT")
                         .requestMatchers(STOCK_WRITE).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .anyRequest().authenticated())

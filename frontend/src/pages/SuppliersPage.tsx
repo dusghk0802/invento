@@ -1,15 +1,19 @@
 import CrudPage from '../components/CrudPage'
-import { useIsOwner } from '../lib/auth'
+import { useMe } from '../lib/auth'
 
 type Supplier = { supplierId: number; supplierName: string; contact: string | null; active: boolean }
 
+// 등록·수정: 사장 + 창고 직원 (발주를 창고 직원도 하므로)
 export default function SuppliersPage() {
+  const role = useMe().data?.role
+  const canWrite = role === 'OWNER' || role === 'WAREHOUSE'
+
   return (
     <CrudPage<Supplier>
       title="공급처(공장)"
       endpoint="/suppliers"
       idKey="supplierId"
-      canWrite={useIsOwner()}
+      canWrite={canWrite}
       emptyText="등록된 공급처가 없습니다."
       columns={[
         { key: 'supplierName', title: '공급처명' },
