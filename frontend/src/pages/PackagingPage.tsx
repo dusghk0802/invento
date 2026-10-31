@@ -1,9 +1,9 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useStockChannel } from '../components/StockChannel'
 import { AdjustModal, HistoryModal } from '../components/StockModals'
-import { Badge, Button, Input, Modal, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
-import { api, getErrorMessage, queryClient } from '../lib/api'
+import { Badge, Button, FormModal, Input, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
+import { api, queryClient, useGet } from '../lib/api'
 import { won } from '../lib/format'
 
 type Usage = 'PRODUCT' | 'SHIPPING'
@@ -28,10 +28,7 @@ export default function PackagingPage() {
   const [adjusting, setAdjusting] = useState<Packaging | null>(null)
   const [history, setHistory] = useState<Packaging | null>(null)
 
-  const { data, isPending } = useQuery({
-    queryKey: ['/packaging'],
-    queryFn: () => api.get<Packaging[]>('/packaging').then((r) => r.data),
-  })
+  const { data, isPending } = useGet<Packaging[]>('/packaging')
   const rows = data?.filter((p) => !usage || p.usageType === usage)
 
   const stockAt = (p: Packaging, locationId: number) => p.stocks.find((s) => s.locationId === locationId)
@@ -93,7 +90,7 @@ export default function PackagingPage() {
       {adjusting && <AdjustModal name={adjusting.packagingName} stocks={adjusting.stocks} locations={adjustLocations}
                                  url="/stocks/packaging/adjust" target={{ packagingId: adjusting.packagingId }}
                                  invalidate="/packaging" onClose={() => setAdjusting(null)} />}
-      {history && <HistoryModal name={history.packagingName} query={`packagingId=${history.packagingId}`} onClose={() => setHistory(null)} />}
+      {history && <HistoryModal name={history.packagingName} params={{ packagingId: history.packagingId }} onClose={() => setHistory(null)} />}
     </>
   )
 }
@@ -125,25 +122,17 @@ function PackagingModal({ packaging, onClose }: { packaging: Packaging | null; o
   const error = save.error ?? remove.error
 
   return (
-    <Modal open title={packaging ? '포장재 수정' : '포장재 등록'} onClose={onClose}
-           footer={
-             <>
-               {packaging && <Button variant="ghost" style={{ marginRight: 'auto' }} disabled={remove.isPending}
-                                     onClick={() => window.confirm('이 포장재를 삭제할까요?') && remove.mutate()}>삭제</Button>}
-               <Button variant="secondary" onClick={onClose}>취소</Button>
-               <Button type="submit" form="packaging-form" disabled={save.isPending}>저장</Button>
-             </>
-           }>
-      <form id="packaging-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <Input label="포장재명" required maxLength={200} value={form.packagingName} onChange={(e) => set({ packagingName: e.target.value })} />
-        <Select label="용도" value={form.usageType} onChange={(e) => set({ usageType: e.target.value as Usage })}
-                options={Object.entries(USAGE).map(([value, label]) => ({ value, label }))} />
-        <Input label="종류" required maxLength={100} placeholder="예: 박스, 봉투, 완충재" value={form.packagingType}
-               onChange={(e) => set({ packagingType: e.target.value })} />
-        <Input label="단가" type="number" min={0} required value={form.unitCost} onChange={(e) => set({ unitCost: e.target.value })} />
-        <Input label="구매처 URL" maxLength={1000} value={form.purchaseUrl} onChange={(e) => set({ purchaseUrl: e.target.value })} />
-        {error && <p className="form-error">{getErrorMessage(error)}</p>}
-      </form>
-    </Modal>
+    <FormModal title={packaging ? '포장재 수정' : '포장재 등록'} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={error}
+               left={packaging && <Button variant="ghost" style={{ marginRight: 'auto' }} disabled={remove.isPending}
+                                          onClick={() => window.confirm('이 포장재를 삭제할까요?') && remove.mutate()}>삭제</Button>}>
+      <Input label="포장재명" required maxLength={200} value={form.packagingName} onChange={(e) => set({ packagingName: e.target.value })} />
+      <Select label="용도" value={form.usageType} onChange={(e) => set({ usageType: e.target.value as Usage })}
+              options={Object.entries(USAGE).map(([value, label]) => ({ value, label }))} />
+      <Input label="종류" required maxLength={100} placeholder="예: 박스, 봉투, 완충재" value={form.packagingType}
+             onChange={(e) => set({ packagingType: e.target.value })} />
+      <Input label="단가" type="number" min={0} required value={form.unitCost} onChange={(e) => set({ unitCost: e.target.value })} />
+      <Input label="구매처 URL" maxLength={1000} value={form.purchaseUrl} onChange={(e) => set({ purchaseUrl: e.target.value })} />
+    </FormModal>
   )
 }

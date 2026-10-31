@@ -12,38 +12,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.invento.global.exception.ErrorCode.INVALID_STATUS;
+import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.EnumType.STRING;
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
+import static lombok.AccessLevel.PRIVATE;
 
 // 공장 발주. 항목(상품·수량)은 입고 전(ORDERED)에만 수정 가능
-@Getter
-@Entity
-@Table(name = "production_orders")
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Entity @Table(name = "production_orders")
+@Getter @Builder @NoArgsConstructor(access = PROTECTED) @AllArgsConstructor(access = PRIVATE)
 public class ProductionOrder extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productionOrderId;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "supplier_id")
-    private Supplier supplier;
-
-    @Column(nullable = false)
-    private LocalDate orderDate;
-
+    @Id @GeneratedValue(strategy = IDENTITY) private Long productionOrderId;
+    @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "supplier_id") private Supplier supplier;
+    @Column(nullable = false) private LocalDate orderDate;
     private LocalDate expectedDate; // 입고 예정일
-
-    @Builder.Default
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ProductionStatus status = ProductionStatus.ORDERED;
-
-    @Column(length = 500)
-    private String memo;
-
-    @Column(nullable = false)
-    private Long createdBy;
+    @Builder.Default @Enumerated(STRING) @Column(nullable = false) private ProductionStatus status = ProductionStatus.ORDERED;
+    @Column(length = 500) private String memo;
+    @Column(nullable = false) private Long createdBy;
 
     @Builder.Default
     @OneToMany(mappedBy = "productionOrder", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -70,9 +56,7 @@ public class ProductionOrder extends BaseEntity {
         status = ProductionStatus.CANCELLED;
     }
 
-    public void checkReceivable() {
-        if (!isOpen()) throw new BusinessException(INVALID_STATUS);
-    }
+    public void checkReceivable() { if (!isOpen()) throw new BusinessException(INVALID_STATUS); }
 
     // 입고 수량 수정은 입고 완료 후에도 가능 (취소된 발주만 불가)
     public void checkCorrectable() {
@@ -87,11 +71,7 @@ public class ProductionOrder extends BaseEntity {
     }
 
     // 입고 예정일이 지났는데 아직 다 안 들어온 발주
-    public boolean isDelayed() {
-        return isOpen() && expectedDate != null && expectedDate.isBefore(LocalDate.now());
-    }
+    public boolean isDelayed() { return isOpen() && expectedDate != null && expectedDate.isBefore(LocalDate.now()); }
 
-    private boolean isOpen() {
-        return status == ProductionStatus.ORDERED || status == ProductionStatus.PARTIAL;
-    }
+    private boolean isOpen() { return status == ProductionStatus.ORDERED || status == ProductionStatus.PARTIAL; }
 }

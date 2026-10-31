@@ -20,15 +20,11 @@ public class ProductController {
 
     // 예: GET /api/admin/products?keyword=스티커&seriesId=1
     @GetMapping
-    public List<Response> findAll(@ModelAttribute Search search) {
-        return service.findAll(search);
-    }
+    public List<Response> findAll(@ModelAttribute Search search) { return service.findAll(search); }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Response create(@Valid @RequestBody Request request) {
-        return service.create(request);
-    }
+    public Response create(@Valid @RequestBody Request request) { return service.create(request); }
 
     @PutMapping("/{id}")
     public Response update(@PathVariable Long id, @Valid @RequestBody Request request) {
@@ -37,7 +33,5 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
-    }
+    public void delete(@PathVariable Long id) { service.delete(id); }
 }

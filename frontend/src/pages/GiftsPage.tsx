@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Badge, Button, Input, Modal, MultiSelect, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
-import { api, getErrorMessage, queryClient } from '../lib/api'
+import { useMutation } from '@tanstack/react-query'
+import { Badge, Button, FormModal, Input, MultiSelect, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
+import { api, queryClient, useGet } from '../lib/api'
 import { useIsOwner } from '../lib/auth'
 import { tagTone, won } from '../lib/format'
-import { ProductStockTable } from './ProductsPage'
+import { ProductStockTable } from '../components/ProductStockTable'
 
 type TypeRef = { productTypeId: number; productTypeName: string }
 type GiftRule = {
@@ -23,7 +23,7 @@ export default function GiftsPage() {
   const isOwner = useIsOwner()
   const [editing, setEditing] = useState<GiftRule | 'new' | null>(null)
 
-  const rules = useQuery({ queryKey: ['/gift-rules'], queryFn: () => api.get<GiftRule[]>('/gift-rules').then((r) => r.data) })
+  const rules = useGet<GiftRule[]>('/gift-rules')
 
   const ruleColumns: Column<GiftRule>[] = [
     { key: 'minimumAmount', title: '조건 (상품 합계)', align: 'right', render: (r) => `${won(r.minimumAmount)} 이상` },
@@ -68,7 +68,7 @@ function GiftRuleModal({ rule, onClose }: { rule: GiftRule | null; onClose: () =
   const [typeIds, setTypeIds] = useState<number[]>(rule?.productTypes.map((t) => t.productTypeId) ?? [])
   const set = (patch: Partial<typeof form>) => setForm({ ...form, ...patch })
 
-  const types = useQuery({ queryKey: ['/product-types'], queryFn: () => api.get<ProductType[]>('/product-types').then((r) => r.data) })
+  const types = useGet<ProductType[]>('/product-types')
 
   const save = useMutation({
     mutationFn: () => {
@@ -82,29 +82,19 @@ function GiftRuleModal({ rule, onClose }: { rule: GiftRule | null; onClose: () =
   })
 
   return (
-    <Modal open title={rule ? '증정 규칙 수정' : '증정 규칙 등록'} onClose={onClose}
-           footer={
-             <>
-               <Button variant="secondary" onClick={onClose}>취소</Button>
-               <Button type="submit" form="gift-form" disabled={save.isPending}>저장</Button>
-             </>
-           }>
-      <form id="gift-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <Input label="조건 (상품 합계, 원 이상)" type="number" min={0} required placeholder="예: 30000" value={form.minimumAmount}
-               onChange={(e) => set({ minimumAmount: e.target.value })} />
-        <Input label="증정 개수" type="number" min={0} required placeholder="예: 2" value={form.giftQty}
-               onChange={(e) => set({ giftQty: e.target.value })} />
-        <Select label="무료배송 (온라인 주문)" value={form.freeShipping} onChange={(e) => set({ freeShipping: e.target.value })}
-                options={[{ value: 'false', label: '아니요' }, { value: 'true', label: '무료배송' }]} />
-        <Select label="사용" value={form.active} onChange={(e) => set({ active: e.target.value })}
-                options={[{ value: 'true', label: '사용' }, { value: 'false', label: '중지' }]} />
-
-        <MultiSelect label="증정 대상 상품종류" value={typeIds} onChange={setTypeIds}
-                     placeholder="상품종류 선택 (여러 개)"
-                     options={(types.data ?? []).filter((t) => t.active || typeIds.includes(t.productTypeId))
-                       .map((t) => ({ value: t.productTypeId, label: t.productTypeName }))} />
-        {save.isError && <p className="form-error">{getErrorMessage(save.error)}</p>}
-      </form>
-    </Modal>
+    <FormModal title={rule ? '증정 규칙 수정' : '증정 규칙 등록'} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={save.error}>
+      <Input label="조건 (상품 합계, 원 이상)" type="number" min={0} required placeholder="예: 30000" value={form.minimumAmount}
+             onChange={(e) => set({ minimumAmount: e.target.value })} />
+      <Input label="증정 개수" type="number" min={0} required placeholder="예: 2" value={form.giftQty}
+             onChange={(e) => set({ giftQty: e.target.value })} />
+      <Select label="무료배송 (온라인 주문)" value={form.freeShipping} onChange={(e) => set({ freeShipping: e.target.value })}
+              options={[{ value: 'false', label: '아니요' }, { value: 'true', label: '무료배송' }]} />
+      <Select label="사용" value={form.active} onChange={(e) => set({ active: e.target.value })}
+              options={[{ value: 'true', label: '사용' }, { value: 'false', label: '중지' }]} />
+      <MultiSelect label="증정 대상 상품종류" value={typeIds} onChange={setTypeIds} placeholder="상품종류 선택 (여러 개)"
+                   options={(types.data ?? []).filter((t) => t.active || typeIds.includes(t.productTypeId))
+                     .map((t) => ({ value: t.productTypeId, label: t.productTypeName }))} />
+    </FormModal>
   )
 }

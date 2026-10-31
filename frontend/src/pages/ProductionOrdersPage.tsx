@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { Button, Input, Modal, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
-import { api, getErrorMessage, queryClient } from '../lib/api'
+import { useMutation } from '@tanstack/react-query'
+import { Button, FormModal, Input, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
+import { api, queryClient, useGet } from '../lib/api'
 import { useIsOwner } from '../lib/auth'
 import { orderNo, today, won } from '../lib/format'
 import { STATUS, statusBadge, type ProductionItem, type ProductionOrder } from '../lib/production'
@@ -17,10 +17,7 @@ export default function ProductionOrdersPage() {
   const [status, setStatus] = useState('')
   const [creating, setCreating] = useState(false)
 
-  const { data, isPending } = useQuery({
-    queryKey: ['/production-orders', status],
-    queryFn: () => api.get<ProductionOrder[]>('/production-orders', { params: { status: status || undefined } }).then((r) => r.data),
-  })
+  const { data, isPending } = useGet<ProductionOrder[]>('/production-orders', { status: status || undefined })
 
   const columns: Column<ProductionOrder>[] = [
     { key: 'productionOrderId', title: '발주번호', render: (o) => orderNo(o.productionOrderId) },
@@ -68,8 +65,8 @@ export function ProductionOrderModal({ order, items, onClose }: { order?: Produc
   const set = (patch: Partial<typeof form>) => setForm({ ...form, ...patch })
   const setLine = (idx: number, patch: Partial<Line>) => setLines(lines.map((l, i) => (i === idx ? { ...l, ...patch } : l)))
 
-  const suppliers = useQuery({ queryKey: ['/suppliers'], queryFn: () => api.get<Supplier[]>('/suppliers').then((r) => r.data) })
-  const products = useQuery({ queryKey: ['/products', 'all'], queryFn: () => api.get<Product[]>('/products').then((r) => r.data) })
+  const suppliers = useGet<Supplier[]>('/suppliers')
+  const products = useGet<Product[]>('/products')
 
   const save = useMutation({
     mutationFn: () => {
@@ -87,36 +84,28 @@ export function ProductionOrderModal({ order, items, onClose }: { order?: Produc
   })
 
   return (
-    <Modal open width={600} title={order ? '발주 수정' : '발주 등록'} onClose={onClose}
-           footer={
-             <>
-               <Button variant="secondary" onClick={onClose}>취소</Button>
-               <Button type="submit" form="production-form" disabled={save.isPending}>저장</Button>
-             </>
-           }>
-      <form id="production-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <Select label="공급처" required value={form.supplierId} placeholder="선택" onChange={(e) => set({ supplierId: e.target.value })}
-                options={(suppliers.data ?? []).filter((s) => s.active || String(s.supplierId) === form.supplierId)
-                  .map((s) => ({ value: s.supplierId, label: s.supplierName }))} />
-        <Input label="발주일" type="date" required value={form.orderDate} onChange={(e) => set({ orderDate: e.target.value })} />
-        <Input label="입고 예정일" type="date" value={form.expectedDate} onChange={(e) => set({ expectedDate: e.target.value })} />
-        <Input label="메모" maxLength={500} value={form.memo} onChange={(e) => set({ memo: e.target.value })} />
+    <FormModal title={order ? '발주 수정' : '발주 등록'} width={600} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={save.error}>
+      <Select label="공급처" required value={form.supplierId} placeholder="선택" onChange={(e) => set({ supplierId: e.target.value })}
+              options={(suppliers.data ?? []).filter((s) => s.active || String(s.supplierId) === form.supplierId)
+                .map((s) => ({ value: s.supplierId, label: s.supplierName }))} />
+      <Input label="발주일" type="date" required value={form.orderDate} onChange={(e) => set({ orderDate: e.target.value })} />
+      <Input label="입고 예정일" type="date" value={form.expectedDate} onChange={(e) => set({ expectedDate: e.target.value })} />
+      <Input label="메모" maxLength={500} value={form.memo} onChange={(e) => set({ memo: e.target.value })} />
 
-        <h3 className="section-title">발주 상품</h3>
-        {lines.map((l, i) => (
-          <div key={i} className="rule-row" style={{ gridTemplateColumns: '1fr 110px auto' }}>
-            <select className="control-plain" required value={l.productId} onChange={(e) => setLine(i, { productId: e.target.value })}>
-              <option value="">상품 선택</option>
-              {products.data?.map((p) => <option key={p.productId} value={p.productId}>{p.productName} ({p.productCode})</option>)}
-            </select>
-            <input className="control-plain" type="number" min={1} required placeholder="수량" value={l.orderedQty}
-                   onChange={(e) => setLine(i, { orderedQty: e.target.value })} />
-            <Button variant="ghost" size="sm" disabled={lines.length === 1} onClick={() => setLines(lines.filter((_, idx) => idx !== i))}>삭제</Button>
-          </div>
-        ))}
-        <Button variant="secondary" size="sm" onClick={() => setLines([...lines, { productId: '', orderedQty: '' }])}>+ 상품 추가</Button>
-        {save.isError && <p className="form-error">{getErrorMessage(save.error)}</p>}
-      </form>
-    </Modal>
+      <h3 className="section-title">발주 상품</h3>
+      {lines.map((l, i) => (
+        <div key={i} className="rule-row" style={{ gridTemplateColumns: '1fr 110px auto' }}>
+          <select className="control-plain" required value={l.productId} onChange={(e) => setLine(i, { productId: e.target.value })}>
+            <option value="">상품 선택</option>
+            {products.data?.map((p) => <option key={p.productId} value={p.productId}>{p.productName} ({p.productCode})</option>)}
+          </select>
+          <input className="control-plain" type="number" min={1} required placeholder="수량" value={l.orderedQty}
+                 onChange={(e) => setLine(i, { orderedQty: e.target.value })} />
+          <Button variant="ghost" size="sm" disabled={lines.length === 1} onClick={() => setLines(lines.filter((_, idx) => idx !== i))}>삭제</Button>
+        </div>
+      ))}
+      <Button variant="secondary" size="sm" onClick={() => setLines([...lines, { productId: '', orderedQty: '' }])}>+ 상품 추가</Button>
+    </FormModal>
   )
 }

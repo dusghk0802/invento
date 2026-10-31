@@ -4,27 +4,19 @@ import com.invento.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
+import static lombok.AccessLevel.PRIVATE;
+
 // 배송방법 = 택배사 포함 (반택 GS/CU, CJ대한통운, 롯데택배, 우체국택배)
-@Getter
-@Entity
-@Table(name = "shipping_methods")
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Entity @Table(name = "shipping_methods")
+@Getter @Builder @NoArgsConstructor(access = PROTECTED) @AllArgsConstructor(access = PRIVATE)
 public class ShippingMethod extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long shippingMethodId;
-
-    @Column(nullable = false, unique = true, length = 100)
-    private String shippingMethodName;
-
-    @Column(nullable = false)
-    private long defaultFee; // 고객에게 받는 기본 배송비 (반택 1900 = 포장비 포함, 택배 3900)
-
-    @Builder.Default
-    @Column(nullable = false)
-    private boolean active = true;
+    @Id @GeneratedValue(strategy = IDENTITY) private Long shippingMethodId;
+    @Column(nullable = false, unique = true, length = 100) private String shippingMethodName;
+    @Column(nullable = false) private long defaultFee; // 고객에게 받는 기본 배송비 (반택 1900 = 포장비 포함, 택배 3900)
+    @Builder.Default @Column(nullable = false) private boolean active = true;
 
     public void update(String shippingMethodName, long defaultFee, boolean active) {
         this.shippingMethodName = shippingMethodName;

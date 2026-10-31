@@ -18,15 +18,11 @@ public class PackagingController {
     private final PackagingService service;
 
     @GetMapping
-    public List<Response> findAll() {
-        return service.findAll();
-    }
+    public List<Response> findAll() { return service.findAll(); }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Response create(@Valid @RequestBody Request request) {
-        return service.create(request);
-    }
+    public Response create(@Valid @RequestBody Request request) { return service.create(request); }
 
     @PutMapping("/{id}")
     public Response update(@PathVariable Long id, @Valid @RequestBody Request request) {
@@ -35,7 +31,5 @@ public class PackagingController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
-    }
+    public void delete(@PathVariable Long id) { service.delete(id); }
 }

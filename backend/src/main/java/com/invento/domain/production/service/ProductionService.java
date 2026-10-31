@@ -1,6 +1,5 @@
 package com.invento.domain.production.service;
 
-import com.invento.domain.admin.entity.Admin;
 import com.invento.domain.admin.repository.AdminRepository;
 import com.invento.domain.location.entity.Location;
 import com.invento.domain.location.entity.LocationType;
@@ -57,7 +56,7 @@ public class ProductionService {
     public Detail create(Request r) {
         ProductionOrder o = ProductionOrder.builder()
                 .supplier(supplierRepo.getOrThrow(r.supplierId())).orderDate(r.orderDate())
-                .expectedDate(r.expectedDate()).memo(r.memo()).createdBy(currentAdminId())
+                .expectedDate(r.expectedDate()).memo(r.memo()).createdBy(adminRepo.current().getAdminId())
                 .build();
         addItems(o, r.items());
         return findOne(repo.save(o).getProductionOrderId());
@@ -70,9 +69,7 @@ public class ProductionService {
         return findOne(id);
     }
 
-    public void cancel(Long id) {
-        repo.getOrThrow(id).cancel();
-    }
+    public void cancel(Long id) { repo.getOrThrow(id).cancel(); }
 
     // 입고: 항목별 입고·불량 기록 → 정상 수량만 창고 재고 증가(원장 PRODUCTION_IN) → 발주 상태 자동 변경
     public Detail receive(Long id, ReceiveRequest r) {
@@ -81,7 +78,7 @@ public class ProductionService {
         Location location = locationRepo.getOrThrow(r.locationId());
         if (location.getLocationType() != LocationType.WAREHOUSE) throw new BusinessException(WAREHOUSE_ONLY);
         stockService.checkLocation(location.getLocationId()); // 창고 직원은 담당 창고만
-        Long adminId = currentAdminId();
+        Long adminId = adminRepo.current().getAdminId();
 
         int processed = 0;
         for (ReceiveItem ri : r.items()) {
@@ -131,10 +128,5 @@ public class ProductionService {
 
     private void addItems(ProductionOrder o, List<ItemRequest> items) {
         items.forEach(i -> o.addItem(productRepo.getOrThrow(i.productId()), i.orderedQty()));
-    }
-
-    private Long currentAdminId() {
-        return adminRepo.findByLoginId(AuthUtils.loginId()).map(Admin::getAdminId)
-                .orElseThrow(() -> new BusinessException(NOT_FOUND));
     }
 }

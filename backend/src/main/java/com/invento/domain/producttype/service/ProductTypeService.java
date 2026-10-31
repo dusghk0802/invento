@@ -41,7 +41,5 @@ public class ProductTypeService {
         return Response.from(type);
     }
 
-    private ProductType parentOf(Request r) {
-        return r.parentId() == null ? null : repo.getOrThrow(r.parentId());
-    }
+    private ProductType parentOf(Request r) { return r.parentId() == null ? null : repo.getOrThrow(r.parentId()); }
 }

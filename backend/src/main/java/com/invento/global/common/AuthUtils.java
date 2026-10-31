@@ -20,7 +20,5 @@ public final class AuthUtils {
                 .anyMatch(a -> a.getAuthority().equals("ROLE_" + role));
     }
 
-    public static boolean isOwner() {
-        return hasRole("OWNER");
-    }
+    public static boolean isOwner() { return hasRole("OWNER"); }
 }

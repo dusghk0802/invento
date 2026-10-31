@@ -7,38 +7,23 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import static com.invento.global.exception.ErrorCode.RECEIPT_EXCEEDS;
+import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
+import static lombok.AccessLevel.PRIVATE;
 
-@Getter
-@Entity
-@Table(name = "production_order_items")
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Entity @Table(name = "production_order_items")
+@Getter @Builder @NoArgsConstructor(access = PROTECTED) @AllArgsConstructor(access = PRIVATE)
 public class ProductionOrderItem extends BaseEntity {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productionOrderItemId;
+    @Id @GeneratedValue(strategy = IDENTITY) private Long productionOrderItemId;
+    @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "production_order_id") private ProductionOrder productionOrder;
+    @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "product_id") private Product product;
+    @Column(nullable = false) private int orderedQty;
+    @Column(nullable = false) private int receivedQty; // 정상 입고 합계 (여러 번 나눠 입고 가능)
+    @Column(nullable = false) private int defectiveQty; // 불량 합계 (재고에 넣지 않음)
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "production_order_id")
-    private ProductionOrder productionOrder;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "product_id")
-    private Product product;
-
-    @Column(nullable = false)
-    private int orderedQty;
-
-    @Column(nullable = false)
-    private int receivedQty; // 정상 입고 합계 (여러 번 나눠 입고 가능)
-
-    @Column(nullable = false)
-    private int defectiveQty; // 불량 합계 (재고에 넣지 않음)
-
-    public int getRemainingQty() {
-        return orderedQty - receivedQty - defectiveQty;
-    }
+    public int getRemainingQty() { return orderedQty - receivedQty - defectiveQty; }
 
     public void receive(int ok, int defective) {
         if (ok < 0 || defective < 0 || ok + defective > getRemainingQty()) throw new BusinessException(RECEIPT_EXCEEDS);

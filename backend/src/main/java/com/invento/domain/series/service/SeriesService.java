@@ -46,9 +46,7 @@ public class SeriesService {
     }
 
     @Transactional
-    public void changeActive(Long seriesId, boolean active) {
-        getSeries(seriesId).changeActive(active);
-    }
+    public void changeActive(Long seriesId, boolean active) { getSeries(seriesId).changeActive(active); }
 
     private Series getSeries(Long seriesId) {
         return seriesRepository.findById(seriesId)

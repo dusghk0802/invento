@@ -43,6 +43,11 @@ public class SecurityConfig {
             "/api/admin/production-orders/**", "/api/admin/suppliers/**"
     };
 
+    // 재고 이동(매장 출고): 사장 + 매장·창고 직원 (단계별로 담당 위치인지는 TransferService에서 확인)
+    private static final String[] TRANSFER = {
+            "/api/admin/transfers/**"
+    };
+
     // 재고 조정·최소수량: 사장 + 매장·창고 직원 (자기 위치인지는 StockService에서 확인)
     private static final String[] STOCK_WRITE = {
             "/api/admin/stocks/adjust", "/api/admin/stocks/minimum"
@@ -62,6 +67,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/suppliers/**").authenticated()
                         .requestMatchers(PRODUCTION).hasAnyRole("OWNER", "WAREHOUSE")
                         .requestMatchers(PACKAGING).hasAnyRole("OWNER", "FULFILLMENT")
+                        .requestMatchers(TRANSFER).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .requestMatchers(STOCK_WRITE).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
@@ -91,7 +97,5 @@ public class SecurityConfig {
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 }

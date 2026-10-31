@@ -3,31 +3,29 @@ package com.invento.domain.stock.service;
 import com.invento.domain.admin.entity.Admin;
 import com.invento.domain.admin.repository.AdminRepository;
 import com.invento.domain.location.entity.Location;
-import com.invento.domain.location.entity.LocationType;
 import com.invento.domain.location.repository.LocationRepository;
-import com.invento.domain.packaging.dto.PackagingDto;
 import com.invento.domain.packaging.repository.PackagingRepository;
-import com.invento.domain.product.dto.ProductDto.StockResponse;
 import com.invento.domain.product.repository.ProductRepository;
-import com.invento.domain.stock.dto.StockDto.AdjustRequest;
-import com.invento.domain.stock.dto.StockDto.MinimumRequest;
-import com.invento.domain.stock.dto.StockDto.MovementResponse;
-import com.invento.domain.stock.dto.StockDto.PackagingAdjustRequest;
-import com.invento.domain.stock.dto.StockDto.PackagingMinimumRequest;
+import com.invento.domain.stock.dto.StockDto.*;
 import com.invento.domain.stock.entity.*;
 import com.invento.domain.stock.repository.PackagingStockRepository;
 import com.invento.domain.stock.repository.ProductStockRepository;
 import com.invento.domain.stock.repository.StockMovementRepository;
-import com.invento.global.common.AuthUtils;
 import com.invento.global.exception.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.util.stream.Collectors.groupingBy;
+
+import static com.invento.domain.location.entity.LocationType.WAREHOUSE;
+import static com.invento.domain.stock.entity.StockMovementType.ADJUST;
 import static com.invento.global.exception.ErrorCode.FORBIDDEN_LOCATION;
 import static com.invento.global.exception.ErrorCode.INVALID_QUANTITY;
 
@@ -48,46 +46,32 @@ public class StockService {
 
     public ProductStock change(Long productId, Long locationId, StockMovementType type, int quantity,
                                AdjustReason reason, String refType, Long refId, String memo) {
-        if (quantity == 0) throw new BusinessException(INVALID_QUANTITY);
-        ProductStock stock = getOrCreate(productId, locationId);
-        stock.changeOnHand(quantity); // 0 미만이 되면 STOCK_NOT_ENOUGH
-        record(stock.getLocation(), StockItemType.PRODUCT, productId, type, quantity, reason, refType, refId, memo);
-        return stock;
+        return apply(productStock(productId, locationId), StockItemType.PRODUCT, productId, type, quantity, reason, refType, refId, memo);
     }
 
     public PackagingStock changePackaging(Long packagingId, Long locationId, StockMovementType type, int quantity,
                                           AdjustReason reason, String refType, Long refId, String memo) {
-        if (quantity == 0) throw new BusinessException(INVALID_QUANTITY);
-        PackagingStock stock = getOrCreatePackaging(packagingId, locationId);
-        stock.changeOnHand(quantity);
-        record(stock.getLocation(), StockItemType.PACKAGING, packagingId, type, quantity, reason, refType, refId, memo);
-        return stock;
+        return apply(packagingStock(packagingId, locationId), StockItemType.PACKAGING, packagingId, type, quantity, reason, refType, refId, memo);
     }
 
-    public StockResponse adjust(AdjustRequest r) {
+    public void adjust(AdjustRequest r) {
         checkLocation(r.locationId());
-        return StockResponse.from(change(r.productId(), r.locationId(), StockMovementType.ADJUST, r.quantity(),
-                r.reason(), null, null, r.memo()));
+        change(r.productId(), r.locationId(), ADJUST, r.quantity(), r.reason(), null, null, r.memo());
     }
 
-    public StockResponse changeMinimum(MinimumRequest r) {
+    public void adjustPackaging(PackagingAdjustRequest r) {
         checkLocation(r.locationId());
-        ProductStock stock = getOrCreate(r.productId(), r.locationId());
-        stock.changeMinimum(r.minimumQty());
-        return StockResponse.from(stock);
+        changePackaging(r.packagingId(), r.locationId(), ADJUST, r.quantity(), r.reason(), null, null, r.memo());
     }
 
-    public PackagingDto.StockResponse adjustPackaging(PackagingAdjustRequest r) {
+    public void changeMinimum(MinimumRequest r) {
         checkLocation(r.locationId());
-        return PackagingDto.StockResponse.from(changePackaging(r.packagingId(), r.locationId(),
-                StockMovementType.ADJUST, r.quantity(), r.reason(), null, null, r.memo()));
+        productStock(r.productId(), r.locationId()).changeMinimum(r.minimumQty());
     }
 
-    public PackagingDto.StockResponse changePackagingMinimum(PackagingMinimumRequest r) {
+    public void changePackagingMinimum(PackagingMinimumRequest r) {
         checkLocation(r.locationId());
-        PackagingStock stock = getOrCreatePackaging(r.packagingId(), r.locationId());
-        stock.changeMinimum(r.minimumQty());
-        return PackagingDto.StockResponse.from(stock);
+        packagingStock(r.packagingId(), r.locationId()).changeMinimum(r.minimumQty());
     }
 
     @Transactional(readOnly = true)
@@ -97,62 +81,57 @@ public class StockService {
                 .stream().filter(m -> visible.test(m.getLocation())).map(MovementResponse::from).toList();
     }
 
-    // 권한별로 볼 수 있는 재고 위치: 사장=전체, 출고 직원=창고, 매장 직원=담당 매장+창고(온라인 재고), 창고 직원=담당 창고
+    // 목록 화면용: 권한별로 볼 수 있는 위치의 재고만 골라서 상품(포장재) ID별로 묶기 (위치 순서대로)
     @Transactional(readOnly = true)
-    public Predicate<Location> visibleLocations() {
-        Admin admin = currentAdmin().orElse(null);
-        if (admin == null) return l -> false;
+    public <S extends LocationStock> Map<Long, List<S>> groupVisible(List<S> stocks, Function<S, Long> itemId) {
+        var visible = visibleLocations();
+        return stocks.stream().filter(s -> visible.test(s.getLocation()))
+                .sorted(Comparator.comparing(s -> s.getLocation().getLocationId())).collect(groupingBy(itemId));
+    }
+
+    @Transactional(readOnly = true)
+    public Predicate<Location> visibleLocations() { return scope(false); }
+
+    public void checkLocation(Long locationId) {
+        if (!scope(true).test(locationRepo.getOrThrow(locationId))) throw new BusinessException(FORBIDDEN_LOCATION);
+    }
+
+    // 권한별 위치 범위. 조회: 사장=전체, 출고 직원=창고, 매장 직원=담당 매장+창고(온라인 재고), 창고 직원=담당 창고
+    // 수정(조정·입고·이동): 같은데 매장 직원은 담당 매장만
+    private Predicate<Location> scope(boolean write) {
+        Admin admin = adminRepo.current();
         Long mine = admin.getLocation() == null ? null : admin.getLocation().getLocationId();
+        Predicate<Location> own = l -> l.getLocationId().equals(mine);
         return switch (admin.getRole()) {
             case OWNER -> l -> true;
-            case FULFILLMENT -> l -> l.getLocationType() == LocationType.WAREHOUSE;
-            case STORE -> l -> l.getLocationType() == LocationType.WAREHOUSE || l.getLocationId().equals(mine);
-            case WAREHOUSE -> l -> l.getLocationId().equals(mine);
+            case FULFILLMENT -> l -> l.getLocationType() == WAREHOUSE;
+            case STORE -> write ? own : own.or(l -> l.getLocationType() == WAREHOUSE);
+            case WAREHOUSE -> own;
         };
     }
 
-    private void record(Location location, StockItemType itemType, Long itemId, StockMovementType type, int quantity,
-                        AdjustReason reason, String refType, Long refId, String memo) {
+    // 수량 변경(0 미만, 상품은 예약 수량 미만이면 STOCK_NOT_ENOUGH) + 원장 기록
+    private <S extends LocationStock> S apply(S stock, StockItemType itemType, Long itemId, StockMovementType type,
+                                              int quantity, AdjustReason reason, String refType, Long refId, String memo) {
+        if (quantity == 0) throw new BusinessException(INVALID_QUANTITY);
+        stock.changeOnHand(quantity);
         movementRepo.save(StockMovement.builder()
-                .location(location).itemType(itemType).itemId(itemId)
-                .movementType(type).quantity(quantity).adjustReason(reason)
-                .refType(refType).refId(refId).memo(memo)
-                .createdBy(currentAdmin().map(Admin::getAdminId).orElse(null))
+                .location(stock.getLocation()).itemType(itemType).itemId(itemId).movementType(type).quantity(quantity)
+                .adjustReason(reason).refType(refType).refId(refId).memo(memo).createdBy(adminRepo.current().getAdminId())
                 .build());
+        return stock;
     }
 
     // 재고 행이 없으면 0개로 생성 (상품·포장재 등록 시 미리 만들지 않음)
-    private ProductStock getOrCreate(Long productId, Long locationId) {
+    private ProductStock productStock(Long productId, Long locationId) {
         return stockRepo.findByProductProductIdAndLocationLocationId(productId, locationId)
                 .orElseGet(() -> stockRepo.save(ProductStock.builder()
-                        .product(productRepo.getOrThrow(productId))
-                        .location(locationRepo.getOrThrow(locationId))
-                        .build()));
+                        .product(productRepo.getOrThrow(productId)).location(locationRepo.getOrThrow(locationId)).build()));
     }
 
-    private PackagingStock getOrCreatePackaging(Long packagingId, Long locationId) {
+    private PackagingStock packagingStock(Long packagingId, Long locationId) {
         return packagingStockRepo.findByPackagingPackagingIdAndLocationLocationId(packagingId, locationId)
                 .orElseGet(() -> packagingStockRepo.save(PackagingStock.builder()
-                        .packaging(packagingRepo.getOrThrow(packagingId))
-                        .location(locationRepo.getOrThrow(locationId))
-                        .build()));
-    }
-
-    // 직접 재고를 바꿀 수 있는 위치: 사장=전체, 출고 직원=창고, 매장·창고 직원=담당 위치 (입고·이동 처리에서도 사용)
-    public void checkLocation(Long locationId) {
-        Admin admin = currentAdmin().orElseThrow(() -> new BusinessException(FORBIDDEN_LOCATION));
-        Location location = locationRepo.getOrThrow(locationId);
-        boolean allowed = switch (admin.getRole()) {
-            case OWNER -> true;
-            case FULFILLMENT -> location.getLocationType() == LocationType.WAREHOUSE;
-            case STORE, WAREHOUSE -> admin.getLocation() != null
-                    && admin.getLocation().getLocationId().equals(locationId);
-        };
-        if (!allowed) throw new BusinessException(FORBIDDEN_LOCATION);
-    }
-
-    private Optional<Admin> currentAdmin() {
-        String loginId = AuthUtils.loginId();
-        return loginId == null ? Optional.empty() : adminRepo.findByLoginId(loginId);
+                        .packaging(packagingRepo.getOrThrow(packagingId)).location(locationRepo.getOrThrow(locationId)).build()));
     }
 }

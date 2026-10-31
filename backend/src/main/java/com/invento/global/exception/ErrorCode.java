@@ -31,7 +31,11 @@ public enum ErrorCode {
 
     // 증정 규칙
     DUPLICATE_GIFT_AMOUNT(HttpStatus.CONFLICT, "같은 금액 조건의 증정 구간이 이미 있습니다."),
-    GIFT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "증정 대상 상품종류를 하나 이상 선택해 주세요.");
+    GIFT_TYPE_REQUIRED(HttpStatus.BAD_REQUEST, "증정 대상 상품종류를 하나 이상 선택해 주세요."),
+
+    // 재고 이동
+    SAME_LOCATION(HttpStatus.BAD_REQUEST, "출발지와 도착지가 같습니다."),
+    BOX_QTY_REQUIRED(HttpStatus.BAD_REQUEST, "박스 입수량이 없는 상품은 낱개로 입력해 주세요.");
 
     private final HttpStatus status;
     private final String message;

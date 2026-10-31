@@ -18,20 +18,14 @@ public class ProductionController {
 
     // 예: GET /api/admin/production-orders?status=PARTIAL&supplierId=1
     @GetMapping
-    public List<Summary> findAll(@ModelAttribute Search search) {
-        return service.findAll(search);
-    }
+    public List<Summary> findAll(@ModelAttribute Search search) { return service.findAll(search); }
 
     @GetMapping("/{id}")
-    public Detail findOne(@PathVariable Long id) {
-        return service.findOne(id);
-    }
+    public Detail findOne(@PathVariable Long id) { return service.findOne(id); }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Detail create(@Valid @RequestBody Request request) {
-        return service.create(request);
-    }
+    public Detail create(@Valid @RequestBody Request request) { return service.create(request); }
 
     @PutMapping("/{id}")
     public Detail update(@PathVariable Long id, @Valid @RequestBody Request request) {
@@ -40,9 +34,7 @@ public class ProductionController {
 
     @PostMapping("/{id}/cancel")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void cancel(@PathVariable Long id) {
-        service.cancel(id);
-    }
+    public void cancel(@PathVariable Long id) { service.cancel(id); }
 
     @PostMapping("/{id}/receipts")
     public Detail receive(@PathVariable Long id, @Valid @RequestBody ReceiveRequest request) {

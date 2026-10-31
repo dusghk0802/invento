@@ -1,5 +1,5 @@
 import axios, { isAxiosError } from 'axios'
-import { QueryClient } from '@tanstack/react-query'
+import { QueryClient, useQuery } from '@tanstack/react-query'
 
 export const api = axios.create({ baseURL: '/api/admin' })
 
@@ -19,3 +19,10 @@ api.interceptors.response.use(undefined, (error) => {
 export function getErrorMessage(error: unknown, fallback = '요청을 처리하지 못했습니다.') {
   return (isAxiosError<{ detail?: string }>(error) && error.response?.data?.detail) || fallback
 }
+
+// GET 조회 공통. 캐시 키 = 주소 조각(+조건) → ['/products']를 새로고침하면 '/products/1'·검색 결과도 같이 새로고침
+export const useGet = <T>(url: string, params?: object) =>
+  useQuery({
+    queryKey: [...url.split('/').filter(Boolean).map((s, i) => (i === 0 ? `/${s}` : s)), ...(params ? [params] : [])],
+    queryFn: () => api.get<T>(url, { params }).then((r) => r.data),
+  })

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { Badge } from './ui'
-import { api } from '../lib/api'
+import { useGet } from '../lib/api'
 import { useMe, type Role } from '../lib/auth'
 
 export type Channel = 'ONLINE' | 'OFFLINE' // 온라인 = 창고 재고(온라인 주문 출고), 오프라인 = 매장 재고
@@ -17,10 +16,7 @@ export function useStockChannel(switchRoles: Role[]) {
   const fixed: Channel = me?.role === 'STORE' ? 'OFFLINE' : 'ONLINE'
   const channel: Channel = canSwitch ? picked ?? fixed : fixed
 
-  const locations = useQuery({
-    queryKey: ['/locations'],
-    queryFn: () => api.get<StockLocation[]>('/locations').then((r) => r.data),
-  })
+  const locations = useGet<StockLocation[]>('/locations')
 
   // 같은 종류의 담당 위치가 있으면 그곳만 (매장 직원의 창고 표 = 창고 전체)
   const channelType = channel === 'ONLINE' ? 'WAREHOUSE' : 'STORE'

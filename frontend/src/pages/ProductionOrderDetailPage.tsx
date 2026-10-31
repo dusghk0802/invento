@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useStockChannel, type StockLocation } from '../components/StockChannel'
-import { Button, Card, Input, InfoGrid, Modal, PageHeader, Select, Table, type Column } from '../components/ui'
-import { api, getErrorMessage, queryClient } from '../lib/api'
+import { Button, Card, FormModal, InfoGrid, Input, PageHeader, Select, Table, type Column } from '../components/ui'
+import { api, getErrorMessage, queryClient, useGet } from '../lib/api'
 import { orderNo, today, won } from '../lib/format'
 import { statusBadge, type ProductionOrder } from '../lib/production'
 import { ProductionOrderModal } from './ProductionOrdersPage'
@@ -25,7 +25,7 @@ export default function ProductionOrderDetailPage() {
   const [receiving, setReceiving] = useState(false)
   const [correcting, setCorrecting] = useState<Receipt | null>(null)
 
-  const { data } = useQuery({ queryKey: ['/production-orders', id], queryFn: () => api.get<Detail>(url).then((r) => r.data) })
+  const { data } = useGet<Detail>(url)
   const order = data?.order
   const open = order?.status === 'ORDERED' || order?.status === 'PARTIAL'
 
@@ -133,30 +133,22 @@ function ReceiveModal({ url, items, locations, onClose }: { url: string; items: 
   })
 
   return (
-    <Modal open width={600} title="입고 처리" onClose={onClose}
-           footer={
-             <>
-               <Button variant="secondary" onClick={onClose}>취소</Button>
-               <Button type="submit" form="receive-form" disabled={save.isPending}>입고</Button>
-             </>
-           }>
-      <form id="receive-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <Select label="입고 창고" required value={locationId} onChange={(e) => setLocationId(e.target.value)}
-                options={locations.map((l) => ({ value: l.locationId, label: l.locationName }))} />
-        <Input label="입고일" type="date" required value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)} />
-        <p className="help-text">이번에 들어온 수량만 입력하세요. 남은 수량은 다음에 나눠서 입고할 수 있어요.</p>
-        {remaining.map((i) => (
-          <div key={i.productionOrderItemId} className="rule-row" style={{ gridTemplateColumns: '1fr 100px 100px' }}>
-            <span>{i.productName} <span className="help-text">(남은 {i.remainingQty})</span></span>
-            <input className="control-plain" type="number" min={0} max={i.remainingQty} placeholder="정상" aria-label="정상 수량"
-                   value={qty[i.productionOrderItemId].ok} onChange={(e) => setItem(i.productionOrderItemId, { ok: e.target.value })} />
-            <input className="control-plain" type="number" min={0} placeholder="불량" aria-label="불량 수량"
-                   value={qty[i.productionOrderItemId].bad} onChange={(e) => setItem(i.productionOrderItemId, { bad: e.target.value })} />
-          </div>
-        ))}
-        {save.isError && <p className="form-error">{getErrorMessage(save.error)}</p>}
-      </form>
-    </Modal>
+    <FormModal title="입고 처리" width={600} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={save.error} submitLabel="입고">
+      <Select label="입고 창고" required value={locationId} onChange={(e) => setLocationId(e.target.value)}
+              options={locations.map((l) => ({ value: l.locationId, label: l.locationName }))} />
+      <Input label="입고일" type="date" required value={receivedDate} onChange={(e) => setReceivedDate(e.target.value)} />
+      <p className="help-text">이번에 들어온 수량만 입력하세요. 남은 수량은 다음에 나눠서 입고할 수 있어요.</p>
+      {remaining.map((i) => (
+        <div key={i.productionOrderItemId} className="rule-row" style={{ gridTemplateColumns: '1fr 100px 100px' }}>
+          <span>{i.productName} <span className="help-text">(남은 {i.remainingQty})</span></span>
+          <input className="control-plain" type="number" min={0} max={i.remainingQty} placeholder="정상" aria-label="정상 수량"
+                 value={qty[i.productionOrderItemId].ok} onChange={(e) => setItem(i.productionOrderItemId, { ok: e.target.value })} />
+          <input className="control-plain" type="number" min={0} placeholder="불량" aria-label="불량 수량"
+                 value={qty[i.productionOrderItemId].bad} onChange={(e) => setItem(i.productionOrderItemId, { bad: e.target.value })} />
+        </div>
+      ))}
+    </FormModal>
   )
 }
 
@@ -175,23 +167,15 @@ function CorrectModal({ url, receipt, onClose }: { url: string; receipt: Receipt
   })
 
   return (
-    <Modal open title={`입고 수정 · ${receipt.productName}`} onClose={onClose}
-           footer={
-             <>
-               <Button variant="secondary" onClick={onClose}>취소</Button>
-               <Button type="submit" form="correct-form" disabled={save.isPending}>저장</Button>
-             </>
-           }>
-      <form id="correct-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate() }}>
-        <p className="help-text">{receipt.receivedDate} · {receipt.locationName} 입고분</p>
-        <Input label="정상 수량" type="number" min={0} required value={ok} onChange={(e) => setOk(e.target.value)} />
-        <Input label="불량 수량" type="number" min={0} required value={bad} onChange={(e) => setBad(e.target.value)} />
-        <p className="help-text">
-          창고 재고 {Number(ok || 0) - receipt.receivedQty >= 0 ? '+' : ''}{Number(ok || 0) - receipt.receivedQty}개.
-          이미 판매·출고돼서 창고 재고가 모자라면 줄일 수 없어요.
-        </p>
-        {save.isError && <p className="form-error">{getErrorMessage(save.error)}</p>}
-      </form>
-    </Modal>
+    <FormModal title={`입고 수정 · ${receipt.productName}`} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={save.error}>
+      <p className="help-text">{receipt.receivedDate} · {receipt.locationName} 입고분</p>
+      <Input label="정상 수량" type="number" min={0} required value={ok} onChange={(e) => setOk(e.target.value)} />
+      <Input label="불량 수량" type="number" min={0} required value={bad} onChange={(e) => setBad(e.target.value)} />
+      <p className="help-text">
+        창고 재고 {Number(ok || 0) - receipt.receivedQty >= 0 ? '+' : ''}{Number(ok || 0) - receipt.receivedQty}개.
+        이미 판매·출고돼서 창고 재고가 모자라면 줄일 수 없어요.
+      </p>
+    </FormModal>
   )
 }

@@ -20,15 +20,11 @@ public class ShippingController {
     private final ShippingService service;
 
     @GetMapping
-    public List<Response> findAll() {
-        return service.findAll();
-    }
+    public List<Response> findAll() { return service.findAll(); }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Response create(@Valid @RequestBody Request request) {
-        return service.create(request);
-    }
+    public Response create(@Valid @RequestBody Request request) { return service.create(request); }
 
     @PutMapping("/{id}")
     public Response update(@PathVariable Long id, @Valid @RequestBody Request request) {
@@ -36,9 +32,7 @@ public class ShippingController {
     }
 
     @GetMapping("/{id}/fee-rules")
-    public List<FeeRuleResponse> findFeeRules(@PathVariable Long id) {
-        return service.findFeeRules(id);
-    }
+    public List<FeeRuleResponse> findFeeRules(@PathVariable Long id) { return service.findFeeRules(id); }
 
     @PutMapping("/{id}/fee-rules")
     public List<FeeRuleResponse> replaceFeeRules(@PathVariable Long id, @RequestBody List<@Valid FeeRuleRequest> rules) {

@@ -1,50 +1,20 @@
 package com.invento.domain.stock.entity;
 
-import com.invento.domain.location.entity.Location;
 import com.invento.domain.packaging.entity.Packaging;
-import com.invento.global.common.BaseEntity;
-import com.invento.global.exception.BusinessException;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
-import static com.invento.global.exception.ErrorCode.STOCK_NOT_ENOUGH;
+import static jakarta.persistence.FetchType.LAZY;
+import static jakarta.persistence.GenerationType.IDENTITY;
+import static lombok.AccessLevel.PROTECTED;
 
-// 위치별 포장재 재고. 주문 예약 없이 사용할 때 바로 차감. 수량은 StockService를 통해서만 변경
-@Getter
-@Entity
-@Table(name = "packaging_stocks",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"packaging_id", "location_id"}))
-@Builder
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class PackagingStock extends BaseEntity {
+// 위치별 포장재 재고. 주문 예약 없이 사용할 때 바로 차감
+@Entity @Table(name = "packaging_stocks", uniqueConstraints = @UniqueConstraint(columnNames = {"packaging_id", "location_id"}))
+@Getter @SuperBuilder @NoArgsConstructor(access = PROTECTED)
+public class PackagingStock extends LocationStock {
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long packagingStockId;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "packaging_id")
-    private Packaging packaging;
-
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "location_id")
-    private Location location;
-
-    @Column(nullable = false)
-    private int onHandQty;
-
-    @Column(nullable = false)
-    private int minimumQty;
-
-    @Version
-    private Long version;
-
-    public void changeOnHand(int delta) {
-        if (onHandQty + delta < 0) throw new BusinessException(STOCK_NOT_ENOUGH);
-        onHandQty += delta;
-    }
-
-    public void changeMinimum(int minimumQty) {
-        this.minimumQty = minimumQty;
-    }
+    @Id @GeneratedValue(strategy = IDENTITY) private Long packagingStockId;
+    @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "packaging_id") private Packaging packaging;
 }

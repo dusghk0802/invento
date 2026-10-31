@@ -15,6 +15,8 @@ import ProductsPage from './pages/ProductsPage'
 import SalesSitesPage from './pages/SalesSitesPage'
 import ShippingMethodsPage from './pages/ShippingMethodsPage'
 import SuppliersPage from './pages/SuppliersPage'
+import TransferDetailPage from './pages/TransferDetailPage'
+import TransfersPage from './pages/TransfersPage'
 
 // 주소 분리: /admin/** 관리자 백오피스, /shop/** 고객 쇼핑몰(10단계)
 export default function App() {
@@ -35,6 +37,8 @@ export default function App() {
         <Route path="bulk-sales/:groupBuyId" element={<GroupBuyDetailPage />} />
         <Route path="production-orders" element={<ProductionOrdersPage />} />
         <Route path="production-orders/:productionOrderId" element={<ProductionOrderDetailPage />} />
+        <Route path="transfers" element={<TransfersPage />} />
+        <Route path="transfers/:stockTransferId" element={<TransferDetailPage />} />
 
         {/* 기준정보 */}
         <Route path="locations" element={<LocationsPage />} />

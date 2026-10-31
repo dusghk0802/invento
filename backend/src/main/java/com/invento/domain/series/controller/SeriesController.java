@@ -25,9 +25,7 @@ public class SeriesController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public SeriesResponse create(@Valid @RequestBody SeriesRequest request) {
-        return seriesService.create(request);
-    }
+    public SeriesResponse create(@Valid @RequestBody SeriesRequest request) { return seriesService.create(request); }
 
     @PutMapping("/{seriesId}")
     public SeriesResponse update(@PathVariable Long seriesId, @Valid @RequestBody SeriesRequest request) {

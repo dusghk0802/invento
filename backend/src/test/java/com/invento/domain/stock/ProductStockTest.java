@@ -30,4 +30,12 @@ class ProductStockTest {
         ProductStock stock = ProductStock.builder().onHandQty(10).reservedQty(4).build();
         assertThat(stock.getAvailableQty()).isEqualTo(6);
     }
+
+    @Test
+    void 주문_예약된_수량은_다른_곳으로_뺄_수_없다() {
+        ProductStock stock = ProductStock.builder().onHandQty(10).reservedQty(4).build();
+        assertThatThrownBy(() -> stock.changeOnHand(-7)).isInstanceOf(BusinessException.class);
+        stock.changeOnHand(-6);
+        assertThat(stock.getOnHandQty()).isEqualTo(4);
+    }
 }

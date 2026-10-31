@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import CrudPage from '../components/CrudPage'
 import { Button, Modal } from '../components/ui'
-import { api, getErrorMessage, queryClient } from '../lib/api'
+import { api, getErrorMessage, queryClient, useGet } from '../lib/api'
 import { useIsOwner } from '../lib/auth'
 import { won } from '../lib/format'
 
@@ -43,13 +43,13 @@ function FeeRulesModal({ method, canWrite, onClose }: { method: ShippingMethod; 
   const url = `/shipping-methods/${method.shippingMethodId}/fee-rules`
   const [rules, setRules] = useState<FeeRule[] | null>(null)
 
-  const types = useQuery({ queryKey: ['/product-types'], queryFn: () => api.get<ProductType[]>('/product-types').then((r) => r.data) })
-  const saved = useQuery({ queryKey: [url], queryFn: () => api.get<FeeRule[]>(url).then((r) => r.data) })
+  const types = useGet<ProductType[]>('/product-types')
+  const saved = useGet<FeeRule[]>(url)
   const rows = rules ?? saved.data ?? [] // 수정을 시작하면 화면의 값(rules), 아니면 저장된 값
 
   const save = useMutation({
     mutationFn: () => api.put(url, rows),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: [url] }); onClose() },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/shipping-methods'] }); onClose() },
   })
 
   const change = (i: number, patch: Partial<FeeRule>) => setRules(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))

@@ -1,6 +1,7 @@
 package com.invento.domain.admin.controller;
 
 import com.invento.domain.admin.repository.AdminRepository;
+import com.invento.domain.location.entity.Location;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -25,11 +26,9 @@ public class AuthController {
         String role = auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
         Map<String, Object> me = new HashMap<>(Map.of("loginId", auth.getName(), "role", role,
                 "features", Map.of("salesSites", salesSites)));
-        me.put("location", adminRepo.findWithLocationByLoginId(auth.getName())
-                .map(a -> a.getLocation())
-                .map(l -> Map.of("locationId", l.getLocationId(), "locationName", l.getLocationName(),
-                        "locationType", l.getLocationType()))
-                .orElse(null));
+        Location l = adminRepo.current().getLocation();
+        me.put("location", l == null ? null
+                : Map.of("locationId", l.getLocationId(), "locationName", l.getLocationName(), "locationType", l.getLocationType()));
         return me;
     }
 }

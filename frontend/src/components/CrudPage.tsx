@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
-import { api, getErrorMessage, queryClient } from '../lib/api'
-import { Badge, Button, Input, Modal, PageHeader, Select, Table, type Column } from './ui'
+import { useMutation } from '@tanstack/react-query'
+import { api, queryClient, useGet } from '../lib/api'
+import { Badge, Button, FormModal, Input, PageHeader, Select, Table, type Column } from './ui'
 
 // 기준정보처럼 "목록 + 등록/수정 모달" 구조인 화면을 설정만으로 만드는 공통 화면
 export type Field = {
@@ -41,10 +41,7 @@ export default function CrudPage<T extends { active: boolean }>(props: Props<T>)
   const { title, endpoint, idKey, columns, fields, canWrite, emptyText, rowActions } = props
   const [editing, setEditing] = useState<T | 'new' | null>(null)
 
-  const { data, isPending } = useQuery({
-    queryKey: [endpoint],
-    queryFn: () => api.get<T[]>(endpoint).then((res) => res.data),
-  })
+  const { data, isPending } = useGet<T[]>(endpoint)
 
   const save = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
@@ -84,18 +81,9 @@ export default function CrudPage<T extends { active: boolean }>(props: Props<T>)
       <PageHeader title={title} actions={canWrite && <Button onClick={() => setEditing('new')}>+ 추가</Button>} />
       <Table columns={allColumns} rows={data} rowKey={(r) => String(r[idKey])} loading={isPending} emptyText={emptyText} />
 
-      <Modal
-        open={editing !== null}
-        title={editing === 'new' ? `${title} 등록` : `${title} 수정`}
-        onClose={close}
-        footer={
-          <>
-            <Button variant="secondary" onClick={close}>취소</Button>
-            <Button type="submit" form="crud-form" disabled={save.isPending}>저장</Button>
-          </>
-        }
-      >
-        <form id="crud-form" className="form-stack" onSubmit={(e) => { e.preventDefault(); save.mutate(toBody(fields, e.currentTarget)) }}>
+      {editing && (
+        <FormModal title={editing === 'new' ? `${title} 등록` : `${title} 수정`} onClose={close}
+                   onSubmit={(form) => save.mutate(toBody(fields, form))} saving={save.isPending} error={save.error}>
           {fields.map((f) => {
             const value = current?.[f.name]
             if (f.type === 'active') {
@@ -116,9 +104,8 @@ export default function CrudPage<T extends { active: boolean }>(props: Props<T>)
                      defaultValue={value == null ? '' : String(value)} />
             )
           })}
-          {save.isError && <p className="form-error">{getErrorMessage(save.error)}</p>}
-        </form>
-      </Modal>
+        </FormModal>
+      )}
     </>
   )
 }

@@ -10,7 +10,5 @@ public class GlobalExceptionHandler {
 
     // 같은 재고를 동시에 수정해서 @Version 충돌이 난 경우 500 대신 409
     @ExceptionHandler(OptimisticLockingFailureException.class)
-    public ProblemDetail optimisticLock() {
-        return new BusinessException(ErrorCode.STOCK_CONFLICT).getBody();
-    }
+    public ProblemDetail optimisticLock() { return new BusinessException(ErrorCode.STOCK_CONFLICT).getBody(); }
 }

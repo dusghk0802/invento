@@ -9,7 +9,5 @@ import org.springframework.data.repository.NoRepositoryBean;
 @NoRepositoryBean
 public interface BaseRepository<T> extends JpaRepository<T, Long> {
 
-    default T getOrThrow(Long id) {
-        return findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND));
-    }
+    default T getOrThrow(Long id) { return findById(id).orElseThrow(() -> new BusinessException(ErrorCode.NOT_FOUND)); }
 }

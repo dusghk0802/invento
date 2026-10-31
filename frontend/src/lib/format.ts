@@ -10,3 +10,6 @@ export const tagTone = (text: string) => tones[[...text].reduce((sum, c) => sum 
 
 // 오늘 날짜 (내 PC 시간 기준) YYYY-MM-DD: date input 기본값용
 export const today = () => new Date().toLocaleDateString('sv-SE')
+
+// 일시: 2026-10-31T14:05:12 → 2026-10-31 14:05
+export const dateTime = (s: string | null | undefined) => (s ? s.replace('T', ' ').slice(0, 16) : '-')
