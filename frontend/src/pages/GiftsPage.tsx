@@ -51,16 +51,18 @@ const ruleColumns: Column<GiftRule>[] = [
 
 export default function GiftsPage() {
   const isOwner = useIsOwner()
+  // 원가로 계산하는 순수익은 사장에게만 표시
+  const visibleGiftColumns = giftColumns.filter((c) => isOwner || c.key !== 'profit')
   // TODO: 증정품·증정 규칙 API 연결 후 rows에 데이터 전달
 
   return (
     <>
-      <PageHeader title="증정품" actions={isOwner && <Button>새로 만들기</Button>}/>
+      <PageHeader title="증정품" actions={isOwner && <Button>+ 추가</Button>}/>
       <div className="page-section">
-        <Table columns={giftColumns} rows={[]} rowKey={(g) => g.productId} emptyText="등록된 증정품이 없습니다." />
+        <Table columns={visibleGiftColumns} rows={[]} rowKey={(g) => g.productId} emptyText="등록된 증정품이 없습니다." />
       </div>
 
-      <Toolbar actions={isOwner && <Button>새로 만들기</Button>}>
+      <Toolbar actions={isOwner && <Button>+ 추가</Button>}>
         <h2 className="section-title">증정 규칙</h2>
       </Toolbar>
       <Table columns={ruleColumns} rows={[]} rowKey={(r) => r.giftRuleId} emptyText="등록된 증정 규칙이 없습니다." />

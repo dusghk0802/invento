@@ -46,13 +46,13 @@ export default function OrdersPage() {
 
   return (
     <>
-      <PageHeader title="주문" actions={<Button>새로 만들기</Button>} />
+      <PageHeader title="온라인 판매" actions={<Button>+ 추가</Button>} />
       {/* TODO: 주문 API 연결 후 rows에 데이터 전달 */}
       <Table
         columns={columns}
         rows={[]}
         rowKey={(o) => o.orderId}
-        onRowClick={(o) => navigate(`/admin/orders/${o.orderId}`)}
+        onRowClick={(o) => navigate(`/admin/online-sales/${o.orderId}`)}
         emptyText="등록된 주문이 없습니다."
       />
     </>

@@ -3,7 +3,9 @@ import { api } from './api'
 
 // OWNER=사장, STORE=매장 직원, WAREHOUSE=창고 직원, FULFILLMENT=출고 직원
 export type Role = 'OWNER' | 'STORE' | 'WAREHOUSE' | 'FULFILLMENT'
-export type Me = { loginId: string; role: Role }
+// features: 개인용/포폴에 따라 켜고 끄는 기능 (서버 설정 app.features)
+export type Features = { salesSites: boolean }
+export type Me = { loginId: string; role: Role; features: Features }
 
 export const useMe = () =>
   useQuery({ queryKey: ['me'], queryFn: () => api.get<Me>('/auth/me').then((res) => res.data) })

@@ -27,14 +27,14 @@ export default function GroupBuysPage() {
 
   return (
     <>
-      <PageHeader title="공동구매" actions={<Button>새로 만들기</Button>} />
+      <PageHeader title="대량 판매" actions={<Button>+ 추가</Button>} />
       {/* TODO: 공동구매 API 연결 후 rows에 데이터 전달 */}
       <Table
         columns={columns}
         rows={[]}
         rowKey={(g) => g.groupBuyId}
-        onRowClick={(g) => navigate(`/admin/group-buys/${g.groupBuyId}`)}
-        emptyText="등록된 공동구매가 없습니다."
+        onRowClick={(g) => navigate(`/admin/bulk-sales/${g.groupBuyId}`)}
+        emptyText="등록된 대량 판매가 없습니다."
       />
     </>
   )

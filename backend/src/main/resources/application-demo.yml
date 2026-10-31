@@ -1,2 +1,5 @@
 app:
   db-name: ${DB_NAME:stationery}
+  # 포폴 데모: 판매 채널이 자사몰 하나라 판매사이트 관리 메뉴 없음
+  features:
+    sales-sites: false

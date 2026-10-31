@@ -44,14 +44,18 @@ const columns: Column<Product>[] = [
   },
 ]
 
+// 원가가 드러나는 컬럼은 사장에게만 표시
+const OWNER_ONLY = ['costPrice', 'profit', 'remain']
+
 export default function ProductsPage() {
   const isOwner = useIsOwner()
+  const visibleColumns = columns.filter((c) => isOwner || !OWNER_ONLY.includes(c.key))
 
   return (
     <>
-      <PageHeader title="상품재고" actions={isOwner && <Button>새로 만들기</Button>} />
+      <PageHeader title="상품재고" actions={isOwner && <Button>+ 추가</Button>} />
       {/* TODO: 상품 API 연결 후 rows에 데이터 전달 */}
-      <Table columns={columns} rows={[]} rowKey={(p) => p.productId} emptyText="등록된 상품이 없습니다." />
+      <Table columns={visibleColumns} rows={[]} rowKey={(p) => p.productId} emptyText="등록된 상품이 없습니다." />
     </>
   )
 }

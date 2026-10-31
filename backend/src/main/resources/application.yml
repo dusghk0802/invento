@@ -37,6 +37,9 @@ spring:
 
 app:
   db-name: ${DB_NAME:goods}
+  # 개인용(goods)·포폴(demo)에 따라 켜고 끄는 기능
+  features:
+    sales-sites: true   # 외부 판매사이트(스마트스토어 등) 관리 - 개인용만
   admin:
     login-id: ${ADMIN_LOGIN_ID}
     password: ${ADMIN_PASSWORD}

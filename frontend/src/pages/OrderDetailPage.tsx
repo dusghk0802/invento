@@ -39,7 +39,7 @@ export default function OrderDetailPage() {
     <>
       <PageHeader
         title={`주문서 ${orderNo(orderId)}`}
-        actions={<Button variant="secondary" onClick={() => navigate('/admin/orders')}>목록</Button>}
+        actions={<Button variant="secondary" onClick={() => navigate('/admin/online-sales')}>목록</Button>}
       />
 
       <Card className="page-section">
@@ -58,7 +58,7 @@ export default function OrderDetailPage() {
       </Card>
 
       <h2 className="section-title">주문한 상품</h2>
-      <Toolbar actions={<Button>새로 만들기</Button>} />
+      <Toolbar actions={<Button>+ 추가</Button>} />
       <Table
         columns={itemColumns}
         rows={items}

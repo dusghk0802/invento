@@ -26,4 +26,10 @@ public class Location extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     private boolean active = true;
+
+    public void update(String locationName, LocationType locationType, boolean active) {
+        this.locationName = locationName;
+        this.locationType = locationType;
+        this.active = active;
+    }
 }

@@ -23,7 +23,9 @@ public class SecurityConfig {
 
     // 조회는 모든 직원, 등록·수정·삭제는 사장만
     private static final String[] OWNER_WRITE = {
-            "/api/admin/products/**", "/api/admin/series/**", "/api/admin/gift-rules/**", "/api/admin/suppliers/**"
+            "/api/admin/products/**", "/api/admin/series/**", "/api/admin/product-types/**",
+            "/api/admin/gift-rules/**", "/api/admin/suppliers/**", "/api/admin/sales-sites/**",
+            "/api/admin/shipping-methods/**"
     };
 
     // 사장 전용 (직원 계정, 활동 로그, 위치 관리)

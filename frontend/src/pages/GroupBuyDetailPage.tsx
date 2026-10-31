@@ -52,8 +52,8 @@ export default function GroupBuyDetailPage() {
   return (
     <>
       <PageHeader
-        title={groupBuy?.groupBuyName ?? '공동구매'}
-        actions={<Button variant="secondary" onClick={() => navigate('/admin/group-buys')}>목록</Button>}
+        title={groupBuy?.groupBuyName ?? '대량 판매'}
+        actions={<Button variant="secondary" onClick={() => navigate('/admin/bulk-sales')}>목록</Button>}
       />
 
       <Card className="page-section">
@@ -69,7 +69,7 @@ export default function GroupBuyDetailPage() {
       </Card>
 
       <h2 className="section-title">주문서</h2>
-      <Toolbar actions={<Button>새로 만들기</Button>} />
+      <Toolbar actions={<Button>+ 추가</Button>} />
       <Table columns={columns} rows={orders} rowKey={(o) => o.groupBuyOrderId} emptyText="등록된 주문서가 없습니다." />
     </>
   )
