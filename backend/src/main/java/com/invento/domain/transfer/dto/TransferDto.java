@@ -4,6 +4,7 @@ import com.invento.domain.transfer.entity.StockTransfer;
 import com.invento.domain.transfer.entity.StockTransferItem;
 import com.invento.domain.transfer.entity.TransferStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -32,14 +33,17 @@ public class TransferDto {
     public record ShipRequest(List<@Valid ShipItem> items) {
     }
 
+    public record RejectRequest(@NotBlank @Size(max = 500) String reason) {}
+
     public record Summary(Long stockTransferId, Long fromLocationId, String fromLocationName, Long toLocationId,
                           String toLocationName, TransferStatus status, int itemCount, int totalQty,
-                          LocalDateTime requestedAt, LocalDateTime shippedAt, LocalDateTime receivedAt, String memo) {
+                          LocalDateTime requestedAt, LocalDateTime decidedAt, String rejectReason,
+                          LocalDateTime shippedAt, LocalDateTime receivedAt, String memo) {
         public static Summary from(StockTransfer t) {
             return new Summary(t.getStockTransferId(), t.getFromLocation().getLocationId(),
                     t.getFromLocation().getLocationName(), t.getToLocation().getLocationId(),
                     t.getToLocation().getLocationName(), t.getStatus(), t.getItems().size(), t.getTotalQty(),
-                    t.getCreatedAt(), t.getShippedAt(), t.getReceivedAt(), t.getMemo());
+                    t.getCreatedAt(), t.getDecidedAt(), t.getRejectReason(), t.getShippedAt(), t.getReceivedAt(), t.getMemo());
         }
     }
 

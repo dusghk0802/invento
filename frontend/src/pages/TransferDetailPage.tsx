@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
-import { Button, Card, FormModal, InfoGrid, PageHeader, Table, type Column } from '../components/ui'
+import { Button, Card, FormModal, InfoGrid, Input, PageHeader, Table, type Column } from '../components/ui'
 import { api, getErrorMessage, queryClient, useGet } from '../lib/api'
 import { useMe } from '../lib/auth'
 import { dateTime, orderNo } from '../lib/format'
@@ -28,15 +28,19 @@ export default function TransferDetailPage() {
   const id = Number(useParams().stockTransferId)
   const url = `/transfers/${id}`
   const me = useMe().data
-  const [shipping, setShipping] = useState(false)
+  const [deciding, setDeciding] = useState<'approve' | 'ship' | 'reject' | null>(null)
 
   const { data } = useGet<Detail>(url)
   const t = data?.transfer
   const isOwner = me?.role === 'OWNER'
   const mine = me?.location?.locationId
-  const canShip = t?.status === 'REQUESTED' && (isOwner || mine === t.fromLocationId)
-  const canReceive = t?.status === 'SHIPPED' && (isOwner || mine === t.toLocationId)
-  const canCancel = t?.status === 'REQUESTED'
+  // 승인·반려·출고 = 출발 창고 담당, 도착 확인·취소 = 요청한 매장 담당, 사장은 전부
+  const fromSide = !!t && (isOwner || mine === t.fromLocationId)
+  const toSide = !!t && (isOwner || mine === t.toLocationId)
+  const canDecide = t?.status === 'REQUESTED' && fromSide
+  const canShip = t?.status === 'APPROVED' && fromSide
+  const canReceive = t?.status === 'SHIPPED' && toSide
+  const canCancel = (t?.status === 'REQUESTED' || t?.status === 'APPROVED') && toSide
 
   const done = () => {
     queryClient.invalidateQueries({ queryKey: ['/transfers'] })
@@ -55,7 +59,9 @@ export default function TransferDetailPage() {
             <Button variant="secondary" onClick={() => navigate('/admin/transfers')}>목록</Button>
             {canCancel && <Button variant="secondary" disabled={cancel.isPending}
                                   onClick={() => window.confirm('출고 요청을 취소할까요?') && cancel.mutate()}>요청 취소</Button>}
-            {canShip && <Button onClick={() => setShipping(true)}>출고 처리</Button>}
+            {canDecide && <Button variant="secondary" onClick={() => setDeciding('reject')}>반려</Button>}
+            {canDecide && <Button onClick={() => setDeciding('approve')}>승인</Button>}
+            {canShip && <Button onClick={() => setDeciding('ship')}>출고 처리</Button>}
             {canReceive && <Button disabled={receive.isPending}
                                    onClick={() => window.confirm('도착을 확인할까요? 보낸 수량만큼 매장 재고가 늘어나요.') && receive.mutate()}>도착 확인</Button>}
           </>
@@ -71,6 +77,8 @@ export default function TransferDetailPage() {
             { label: '상태', value: t && transferBadge(t) },
             { label: '총 수량', value: t && `${t.totalQty}개` },
             { label: '요청일', value: t && dateTime(t.requestedAt) },
+            { label: '승인·반려일', value: t && dateTime(t.decidedAt) },
+            ...(t?.rejectReason ? [{ label: '반려 사유', value: t.rejectReason }] : []),
             { label: '출고일', value: t && dateTime(t.shippedAt) },
             { label: '도착일', value: t && dateTime(t.receivedAt) },
             { label: '메모', value: t?.memo },
@@ -84,19 +92,26 @@ export default function TransferDetailPage() {
       <h2 className="section-title">이동 상품</h2>
       <Table columns={itemColumns} rows={data?.items} rowKey={(i) => i.stockTransferItemId} loading={!data} />
 
-      {shipping && data && <ShipModal url={url} items={data.items} onClose={() => setShipping(false)} />}
+      {(deciding === 'approve' || deciding === 'ship') && data &&
+        <QtyModal url={url} action={deciding} items={data.items} onClose={() => setDeciding(null)} />}
+      {deciding === 'reject' && <RejectModal url={url} onClose={() => setDeciding(null)} />}
     </>
   )
 }
 
-// 출고 처리: 실제로 보내는 박스·낱개 수 확인(수정 가능) → 창고 재고 차감
-function ShipModal({ url, items, onClose }: { url: string; items: Item[]; onClose: () => void }) {
+const ACTION = {
+  approve: { title: '승인', label: '승인', help: '창고에서 보낼 수 있는 수량으로 확정하세요. 재고는 출고할 때 빠져요.' },
+  ship: { title: '출고 처리', label: '출고', help: '실제로 보내는 수량을 확인하세요. 0이면 이번에 보내지 않아요. 출고하면 창고 재고가 바로 빠져요.' },
+}
+
+// 승인(수량 확정) / 출고 처리(실제 보내는 수량, 창고 재고 차감) 공통: 박스·낱개 수 수정 가능
+function QtyModal({ url, action, items, onClose }: { url: string; action: 'approve' | 'ship'; items: Item[]; onClose: () => void }) {
   const [qty, setQty] = useState(Object.fromEntries(items.map((i) => [i.stockTransferItemId, { box: String(i.boxCount), loose: String(i.looseQty) }])))
   const setItem = (itemId: number, patch: Partial<{ box: string; loose: string }>) => setQty({ ...qty, [itemId]: { ...qty[itemId], ...patch } })
   const qtyOf = (i: Item) => Number(qty[i.stockTransferItemId].box || 0) * (i.boxQty ?? 0) + Number(qty[i.stockTransferItemId].loose || 0)
 
   const save = useMutation({
-    mutationFn: () => api.post(`${url}/ship`, {
+    mutationFn: () => api.post(`${url}/${action}`, {
       items: items.map((i) => ({
         stockTransferItemId: i.stockTransferItemId,
         boxCount: Number(qty[i.stockTransferItemId].box || 0),
@@ -111,9 +126,9 @@ function ShipModal({ url, items, onClose }: { url: string; items: Item[]; onClos
   })
 
   return (
-    <FormModal title="출고 처리" width={620} onClose={onClose} onSubmit={() => save.mutate()}
-               saving={save.isPending} error={save.error} submitLabel="출고">
-      <p className="help-text">실제로 보내는 수량을 확인하세요. 0이면 이번에 보내지 않아요. 출고하면 창고 재고가 바로 빠져요.</p>
+    <FormModal title={ACTION[action].title} width={620} onClose={onClose} onSubmit={() => save.mutate()}
+               saving={save.isPending} error={save.error} submitLabel={ACTION[action].label}>
+      <p className="help-text">{ACTION[action].help}</p>
       {items.map((i) => (
         <div key={i.stockTransferItemId} className="rule-row" style={{ gridTemplateColumns: '1fr 80px 80px 70px' }}>
           <span>{i.productName} <span className="help-text">{i.boxQty ? `(1박스 ${i.boxQty}개)` : '(낱개만)'}</span></span>
@@ -124,6 +139,21 @@ function ShipModal({ url, items, onClose }: { url: string; items: Item[]; onClos
           <span style={{ textAlign: 'right' }}>= {qtyOf(i)}개</span>
         </div>
       ))}
+    </FormModal>
+  )
+}
+
+// 반려: 사유는 요청한 매장에 그대로 보임 (예: 창고 재고 없음, 다음 주 입고 후 재요청)
+function RejectModal({ url, onClose }: { url: string; onClose: () => void }) {
+  const [reason, setReason] = useState('')
+  const save = useMutation({
+    mutationFn: () => api.post(`${url}/reject`, { reason }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/transfers'] }); onClose() },
+  })
+  return (
+    <FormModal title="반려" onClose={onClose} onSubmit={() => save.mutate()} saving={save.isPending} error={save.error} submitLabel="반려">
+      <Input label="반려 사유" required maxLength={500} placeholder="예: 창고 재고 없음, 다음 주 입고 후 재요청" value={reason}
+             onChange={(e) => setReason(e.target.value)} />
     </FormModal>
   )
 }

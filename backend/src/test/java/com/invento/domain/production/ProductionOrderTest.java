@@ -75,4 +75,14 @@ class ProductionOrderTest {
         o.addItem(null, 10);
         assertThat(o.isDelayed()).isTrue();
     }
+
+    @Test
+    void 공장_확인하면_확정_납기일로_지연을_판단한다() {
+        ProductionOrder o = ProductionOrder.builder().orderDate(LocalDate.now().minusDays(10))
+                .expectedDate(LocalDate.now().minusDays(1)).build(); // 희망일은 지났지만
+        o.addItem(null, 10);
+        o.confirm(LocalDate.now().plusDays(3)); // 공장 회신 납기는 3일 뒤
+        assertThat(o.getStatus()).isEqualTo(ProductionStatus.CONFIRMED);
+        assertThat(o.isDelayed()).isFalse();
+    }
 }

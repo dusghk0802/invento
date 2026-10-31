@@ -26,8 +26,9 @@ public class ProductionOrder extends BaseEntity {
     @Id @GeneratedValue(strategy = IDENTITY) private Long productionOrderId;
     @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "supplier_id") private Supplier supplier;
     @Column(nullable = false) private LocalDate orderDate;
-    private LocalDate expectedDate; // 입고 예정일
-    @Builder.Default @Enumerated(STRING) @Column(nullable = false) private ProductionStatus status = ProductionStatus.ORDERED;
+    private LocalDate expectedDate; // 입고 예정일 (발주할 때 희망)
+    private LocalDate confirmedDate; // 확정 납기일 (공장이 회신한 날짜를 직원이 입력)
+    @Builder.Default @Enumerated(STRING) @Column(nullable = false, columnDefinition = "varchar(20)") private ProductionStatus status = ProductionStatus.ORDERED;
     @Column(length = 500) private String memo;
     @Column(nullable = false) private Long createdBy;
 
@@ -42,7 +43,7 @@ public class ProductionOrder extends BaseEntity {
 
     // 발주 내용 수정: 입고가 하나도 없을 때만. 항목은 비우고 다시 추가
     public void update(Supplier supplier, LocalDate orderDate, LocalDate expectedDate, String memo) {
-        if (status != ProductionStatus.ORDERED) throw new BusinessException(INVALID_STATUS);
+        if (!isBeforeReceipt()) throw new BusinessException(INVALID_STATUS);
         this.supplier = supplier;
         this.orderDate = orderDate;
         this.expectedDate = expectedDate;
@@ -56,6 +57,13 @@ public class ProductionOrder extends BaseEntity {
         status = ProductionStatus.CANCELLED;
     }
 
+    // 공장 확인: 공장이 발주서를 확인하고 회신한 납기일 기록 (다시 누르면 날짜만 바꿈)
+    public void confirm(LocalDate confirmedDate) {
+        if (!isBeforeReceipt()) throw new BusinessException(INVALID_STATUS);
+        this.confirmedDate = confirmedDate;
+        status = ProductionStatus.CONFIRMED;
+    }
+
     public void checkReceivable() { if (!isOpen()) throw new BusinessException(INVALID_STATUS); }
 
     // 입고 수량 수정은 입고 완료 후에도 가능 (취소된 발주만 불가)
@@ -67,11 +75,17 @@ public class ProductionOrder extends BaseEntity {
     public void refreshStatus() {
         boolean done = items.stream().allMatch(i -> i.getRemainingQty() == 0);
         boolean started = items.stream().anyMatch(i -> i.getReceivedQty() + i.getDefectiveQty() > 0);
-        status = done ? ProductionStatus.RECEIVED : started ? ProductionStatus.PARTIAL : ProductionStatus.ORDERED;
+        status = done ? ProductionStatus.RECEIVED : started ? ProductionStatus.PARTIAL
+                : confirmedDate != null ? ProductionStatus.CONFIRMED : ProductionStatus.ORDERED;
     }
 
-    // 입고 예정일이 지났는데 아직 다 안 들어온 발주
-    public boolean isDelayed() { return isOpen() && expectedDate != null && expectedDate.isBefore(LocalDate.now()); }
+    // 납기일(확정 납기일, 없으면 입고 예정일)이 지났는데 아직 다 안 들어온 발주
+    public boolean isDelayed() {
+        LocalDate due = confirmedDate != null ? confirmedDate : expectedDate;
+        return isOpen() && due != null && due.isBefore(LocalDate.now());
+    }
 
-    private boolean isOpen() { return status == ProductionStatus.ORDERED || status == ProductionStatus.PARTIAL; }
+    private boolean isBeforeReceipt() { return status == ProductionStatus.ORDERED || status == ProductionStatus.CONFIRMED; }
+
+    private boolean isOpen() { return isBeforeReceipt() || status == ProductionStatus.PARTIAL; }
 }

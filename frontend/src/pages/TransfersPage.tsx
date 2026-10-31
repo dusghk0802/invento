@@ -36,8 +36,8 @@ export default function TransfersPage() {
 
   return (
     <>
-      <PageHeader title="매장출고현황"
-                  actions={(role === 'OWNER' || role === 'STORE') && <Button onClick={() => setRequesting(true)}>+ 출고 요청</Button>} />
+      <PageHeader title="매장 입·출고 내역"
+                  actions={(role === 'OWNER' || role === 'STORE') && <Button onClick={() => setRequesting(true)}>+ 입고요청</Button>} />
       <Toolbar>
         <select className="control-plain" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">전체 상태</option>

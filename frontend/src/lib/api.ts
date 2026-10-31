@@ -26,3 +26,13 @@ export const useGet = <T>(url: string, params?: object) =>
     queryKey: [...url.split('/').filter(Boolean).map((s, i) => (i === 0 ? `/${s}` : s)), ...(params ? [params] : [])],
     queryFn: () => api.get<T>(url, { params }).then((r) => r.data),
   })
+
+// 파일 다운로드 (엑셀 등): 서버가 만든 파일을 받아 브라우저에 저장
+export async function download(url: string, filename: string) {
+  const res = await api.get<Blob>(url, { responseType: 'blob' })
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(res.data)
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(a.href)
+}

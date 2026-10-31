@@ -60,13 +60,23 @@ public class TransferService {
     }
 
     // 출고: 실제 보내는 수량으로 고친 뒤 출발지 재고 차감 (판매 가능 재고가 모자라면 실패)
-    public Detail ship(Long id, ShipRequest r) {
+    // 승인: 창고 담당이 보낼 수 있는 수량으로 확정 (재고는 출고할 때 빠짐)
+    public Detail approve(Long id, ShipRequest r) {
+        StockTransfer t = fromSide(id, r);
+        t.approve(adminRepo.current().getAdminId());
+        return Detail.from(t);
+    }
+
+    // 반려: 창고 담당이 사유와 함께 거절 (예: 창고 재고 없음)
+    public Detail reject(Long id, RejectRequest r) {
         StockTransfer t = repo.getOrThrow(id);
         stockService.checkLocation(t.getFromLocation().getLocationId());
-        if (r != null && r.items() != null) {
-            for (ShipItem si : r.items()) itemOf(t, si.stockTransferItemId()).changeQty(si.boxCount(), si.looseQty());
-        }
-        if (t.getTotalQty() == 0) throw new BusinessException(INVALID_QUANTITY);
+        t.reject(adminRepo.current().getAdminId(), r.reason());
+        return Detail.from(t);
+    }
+
+    public Detail ship(Long id, ShipRequest r) {
+        StockTransfer t = fromSide(id, r);
         t.ship(adminRepo.current().getAdminId());
         move(t, StockMovementType.TRANSFER_OUT, t.getFromLocation().getLocationId(), -1);
         return Detail.from(t);
@@ -81,7 +91,23 @@ public class TransferService {
         return Detail.from(t);
     }
 
-    public void cancel(Long id) { getVisible(id).cancel(); }
+    // 취소: 요청한 매장 쪽(또는 사장)만, 출고 전까지
+    public void cancel(Long id) {
+        StockTransfer t = repo.getOrThrow(id);
+        stockService.checkLocation(t.getToLocation().getLocationId());
+        t.cancel();
+    }
+
+    // 창고(출발지) 담당 확인 + 보낼 수량 수정
+    private StockTransfer fromSide(Long id, ShipRequest r) {
+        StockTransfer t = repo.getOrThrow(id);
+        stockService.checkLocation(t.getFromLocation().getLocationId());
+        if (r != null && r.items() != null) {
+            for (ShipItem si : r.items()) itemOf(t, si.stockTransferItemId()).changeQty(si.boxCount(), si.looseQty());
+        }
+        if (t.getTotalQty() == 0) throw new BusinessException(INVALID_QUANTITY);
+        return t;
+    }
 
     private void move(StockTransfer t, StockMovementType type, Long locationId, int sign) {
         t.getItems().stream().filter(i -> i.getQuantity() > 0).forEach(i ->

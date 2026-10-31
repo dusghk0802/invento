@@ -71,6 +71,15 @@ public class ProductionService {
 
     public void cancel(Long id) { repo.getOrThrow(id).cancel(); }
 
+    // 발주서 엑셀 (단가·금액은 사장만)
+    @Transactional(readOnly = true)
+    public byte[] excel(Long id) { return PurchaseOrderExcel.write(repo.getOrThrow(id), AuthUtils.isOwner()); }
+
+    public Detail confirm(Long id, ConfirmRequest r) {
+        repo.getOrThrow(id).confirm(r.confirmedDate());
+        return findOne(id);
+    }
+
     // 입고: 항목별 입고·불량 기록 → 정상 수량만 창고 재고 증가(원장 PRODUCTION_IN) → 발주 상태 자동 변경
     public Detail receive(Long id, ReceiveRequest r) {
         ProductionOrder o = repo.getOrThrow(id);

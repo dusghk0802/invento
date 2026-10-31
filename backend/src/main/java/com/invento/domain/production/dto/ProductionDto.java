@@ -26,6 +26,8 @@ public class ProductionDto {
             @NotEmpty List<@Valid ItemRequest> items) {
     }
 
+    public record ConfirmRequest(@NotNull LocalDate confirmedDate) {}
+
     public record Search(ProductionStatus status, Long supplierId) {
     }
 
@@ -44,15 +46,16 @@ public class ProductionDto {
     }
 
     // 목록 한 줄. totalCost(발주 금액 = 발주 수량 × 원가)는 사장에게만
-    public record Summary(Long productionOrderId, Long supplierId, String supplierName, LocalDate orderDate,
-                          LocalDate expectedDate, ProductionStatus status, boolean delayed, String memo,
+    public record Summary(Long productionOrderId, Long supplierId, String supplierName, String supplierContact,
+                          LocalDate orderDate, LocalDate expectedDate, LocalDate confirmedDate, ProductionStatus status,
+                          boolean delayed, String memo,
                           int itemCount, int orderedQty, int receivedQty, int defectiveQty,
                           @JsonInclude(NON_NULL) Long totalCost) {
         public static Summary of(ProductionOrder o, boolean showCost) {
             var items = o.getItems();
             return new Summary(o.getProductionOrderId(), o.getSupplier().getSupplierId(),
-                    o.getSupplier().getSupplierName(), o.getOrderDate(), o.getExpectedDate(), o.getStatus(),
-                    o.isDelayed(), o.getMemo(), items.size(),
+                    o.getSupplier().getSupplierName(), o.getSupplier().getContact(), o.getOrderDate(), o.getExpectedDate(),
+                    o.getConfirmedDate(), o.getStatus(), o.isDelayed(), o.getMemo(), items.size(),
                     items.stream().mapToInt(ProductionOrderItem::getOrderedQty).sum(),
                     items.stream().mapToInt(ProductionOrderItem::getReceivedQty).sum(),
                     items.stream().mapToInt(ProductionOrderItem::getDefectiveQty).sum(),

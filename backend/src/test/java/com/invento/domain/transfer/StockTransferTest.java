@@ -26,12 +26,21 @@ class StockTransferTest {
     }
 
     @Test
-    void 요청_출고_도착_순서로만_진행된다() {
+    void 요청_승인_출고_도착_순서로만_진행된다() {
         StockTransfer t = StockTransfer.builder().build();
-        assertThatThrownBy(() -> t.receive(1L)).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(() -> t.ship(1L)).isInstanceOf(BusinessException.class); // 승인 전 출고 불가
+        t.approve(1L);
         t.ship(1L);
-        assertThatThrownBy(t::cancel).isInstanceOf(BusinessException.class);
+        assertThatThrownBy(t::cancel).isInstanceOf(BusinessException.class); // 출고 후 취소 불가
         t.receive(2L);
         assertThat(t.getStatus()).isEqualTo(TransferStatus.RECEIVED);
+    }
+
+    @Test
+    void 반려하면_사유가_남고_출고할_수_없다() {
+        StockTransfer t = StockTransfer.builder().build();
+        t.reject(1L, "창고 재고 없음");
+        assertThat(t.getRejectReason()).isEqualTo("창고 재고 없음");
+        assertThatThrownBy(() -> t.ship(1L)).isInstanceOf(BusinessException.class);
     }
 }

@@ -26,8 +26,11 @@ public class StockTransfer extends BaseEntity {
     @Id @GeneratedValue(strategy = IDENTITY) private Long stockTransferId;
     @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "from_location_id") private Location fromLocation;
     @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "to_location_id") private Location toLocation;
-    @Builder.Default @Enumerated(STRING) @Column(nullable = false) private TransferStatus status = TransferStatus.REQUESTED;
+    @Builder.Default @Enumerated(STRING) @Column(nullable = false, columnDefinition = "varchar(20)") private TransferStatus status = TransferStatus.REQUESTED;
     @Column(nullable = false) private Long requestedBy; // 요청일 = createdAt
+    private Long decidedBy; // 승인·반려한 창고 담당
+    private LocalDateTime decidedAt;
+    @Column(length = 500) private String rejectReason;
     private Long shippedBy;
     private LocalDateTime shippedAt; // 출발지 TRANSFER_OUT
     private Long receivedBy;
@@ -47,8 +50,21 @@ public class StockTransfer extends BaseEntity {
 
     public int getTotalQty() { return items.stream().mapToInt(StockTransferItem::getQuantity).sum(); }
 
-    public void ship(Long adminId) {
+    public void approve(Long adminId) { decide(TransferStatus.APPROVED, adminId, null); }
+
+    public void reject(Long adminId, String reason) { decide(TransferStatus.REJECTED, adminId, reason); }
+
+    private void decide(TransferStatus result, Long adminId, String reason) {
         if (status != TransferStatus.REQUESTED) throw new BusinessException(INVALID_STATUS);
+        status = result;
+        decidedBy = adminId;
+        decidedAt = LocalDateTime.now();
+        rejectReason = reason;
+    }
+
+    // 출고는 승인된 요청만
+    public void ship(Long adminId) {
+        if (status != TransferStatus.APPROVED) throw new BusinessException(INVALID_STATUS);
         status = TransferStatus.SHIPPED;
         shippedBy = adminId;
         shippedAt = LocalDateTime.now();
@@ -61,9 +77,9 @@ public class StockTransfer extends BaseEntity {
         receivedAt = LocalDateTime.now();
     }
 
-    // 출고 전(요청 상태)에만 취소. 출고 후에는 재고가 이미 빠져서 도착 확인 후 조정으로 처리
+    // 출고 전(요청·승인 상태)에만 취소. 출고 후에는 재고가 이미 빠져서 도착 확인 후 조정으로 처리
     public void cancel() {
-        if (status != TransferStatus.REQUESTED) throw new BusinessException(INVALID_STATUS);
+        if (status != TransferStatus.REQUESTED && status != TransferStatus.APPROVED) throw new BusinessException(INVALID_STATUS);
         status = TransferStatus.CANCELLED;
     }
 }

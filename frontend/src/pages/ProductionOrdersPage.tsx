@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { Button, FormModal, Input, PageHeader, Select, Table, Toolbar, type Column } from '../components/ui'
-import { api, queryClient, useGet } from '../lib/api'
+import { api, download, queryClient, useGet } from '../lib/api'
 import { useIsOwner } from '../lib/auth'
 import { orderNo, today, won } from '../lib/format'
 import { STATUS, statusBadge, type ProductionItem, type ProductionOrder } from '../lib/production'
@@ -30,11 +30,20 @@ export default function ProductionOrdersPage() {
     { key: 'defectiveQty', title: '불량', align: 'right' },
     ...(isOwner ? [{ key: 'totalCost', title: '발주 금액', align: 'right' as const, render: (o: ProductionOrder) => won(o.totalCost) }] : []),
     { key: 'status', title: '상태', align: 'center', render: statusBadge },
+    {
+      key: 'excel', title: '발주서', align: 'center',
+      render: (o) => ( // 행 클릭(상세 이동)과 겹치지 않게 막고 엑셀만 받기
+        <Button variant="secondary" size="sm" onClick={(e) => {
+          e.stopPropagation()
+          download(`/production-orders/${o.productionOrderId}/excel`, `발주서_${orderNo(o.productionOrderId)}_${o.supplierName}.xlsx`)
+        }}>엑셀</Button>
+      ),
+    },
   ]
 
   return (
     <>
-      <PageHeader title="발주·입고" actions={<Button onClick={() => setCreating(true)}>+ 추가</Button>} />
+      <PageHeader title="창고 입·출고 내역" actions={<Button onClick={() => setCreating(true)}>+ 입고요청</Button>} />
       <Toolbar>
         <select className="control-plain" value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">전체 상태</option>

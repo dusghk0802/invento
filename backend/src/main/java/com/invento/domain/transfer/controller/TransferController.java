@@ -29,6 +29,14 @@ public class TransferController {
     @ResponseStatus(HttpStatus.CREATED)
     public Detail request(@Valid @RequestBody Request request) { return service.request(request); }
 
+    @PostMapping("/{id}/approve")
+    public Detail approve(@PathVariable Long id, @Valid @RequestBody(required = false) ShipRequest request) {
+        return service.approve(id, request);
+    }
+
+    @PostMapping("/{id}/reject")
+    public Detail reject(@PathVariable Long id, @Valid @RequestBody RejectRequest request) { return service.reject(id, request); }
+
     @PostMapping("/{id}/ship")
     public Detail ship(@PathVariable Long id, @Valid @RequestBody(required = false) ShipRequest request) {
         return service.ship(id, request);

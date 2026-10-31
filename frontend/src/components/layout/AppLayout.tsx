@@ -42,8 +42,8 @@ const menuGroups: MenuGroup[] = [
     icon: Truck,
     dropdown: true,
     items: [
-      { to: '/admin/production-orders', label: '발주·입고', roles: ['OWNER', 'WAREHOUSE'] },
-      { to: '/admin/transfers', label: '매장출고현황', roles: ['OWNER', 'WAREHOUSE', 'STORE'] },
+      { to: '/admin/production-orders', label: '창고 입·출고', roles: ['OWNER', 'WAREHOUSE'] },
+      { to: '/admin/transfers', label: '매장 입·출고', roles: ['OWNER', 'WAREHOUSE', 'STORE'] },
       { to: '/admin/suppliers', label: '공급처', roles: ['OWNER', 'WAREHOUSE'] },
       { to: '/admin/sales-sites', label: '판매사이트', roles: ['OWNER'], feature: 'salesSites' },
       { to: '/admin/shipping-methods', label: '배송방법', roles: ['OWNER', 'FULFILLMENT'] },

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useStockChannel, type StockLocation } from '../components/StockChannel'
 import { Button, Card, FormModal, InfoGrid, Input, PageHeader, Select, Table, type Column } from '../components/ui'
-import { api, getErrorMessage, queryClient, useGet } from '../lib/api'
+import { api, download, getErrorMessage, queryClient, useGet } from '../lib/api'
 import { orderNo, today, won } from '../lib/format'
 import { statusBadge, type ProductionOrder } from '../lib/production'
 import { ProductionOrderModal } from './ProductionOrdersPage'
@@ -24,10 +24,12 @@ export default function ProductionOrderDetailPage() {
   const [editing, setEditing] = useState(false)
   const [receiving, setReceiving] = useState(false)
   const [correcting, setCorrecting] = useState<Receipt | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
   const { data } = useGet<Detail>(url)
   const order = data?.order
-  const open = order?.status === 'ORDERED' || order?.status === 'PARTIAL'
+  const beforeReceipt = order?.status === 'ORDERED' || order?.status === 'CONFIRMED' // 입고 전: 수정·공장 확인 가능
+  const open = beforeReceipt || order?.status === 'PARTIAL'
 
   const cancel = useMutation({
     mutationFn: () => api.post(`${url}/cancel`),
@@ -68,7 +70,9 @@ export default function ProductionOrderDetailPage() {
         actions={
           <>
             <Button variant="secondary" onClick={() => navigate('/admin/production-orders')}>목록</Button>
-            {order?.status === 'ORDERED' && <Button variant="secondary" onClick={() => setEditing(true)}>수정</Button>}
+            {order && <Button variant="secondary" onClick={() => download(`${url}/excel`, `발주서_${orderNo(id)}_${order.supplierName}.xlsx`)}>발주서 엑셀</Button>}
+            {beforeReceipt && <Button variant="secondary" onClick={() => setEditing(true)}>수정</Button>}
+            {beforeReceipt && <Button variant="secondary" onClick={() => setConfirming(true)}>공장 확인</Button>}
             {open && <Button variant="secondary" disabled={cancel.isPending}
                              onClick={() => window.confirm('발주를 취소할까요? 이미 입고된 재고는 그대로 남아요.') && cancel.mutate()}>발주 취소</Button>}
             {open && adjustLocations.length > 0 && <Button onClick={() => setReceiving(true)}>입고 처리</Button>}
@@ -84,6 +88,7 @@ export default function ProductionOrderDetailPage() {
             { label: '상태', value: order && statusBadge(order) },
             { label: '발주일', value: order?.orderDate },
             { label: '입고 예정일', value: order?.expectedDate },
+            { label: '확정 납기일', value: order?.confirmedDate },
             { label: '발주 / 입고 / 불량', value: order && `${order.orderedQty} / ${order.receivedQty} / ${order.defectiveQty}` },
             ...(isOwner ? [{ label: '발주 금액', value: order && won(order.totalCost) }] : []),
             { label: '메모', value: order?.memo },
@@ -103,6 +108,7 @@ export default function ProductionOrderDetailPage() {
       {editing && order && <ProductionOrderModal order={order} items={data.items} onClose={() => setEditing(false)} />}
       {correcting && <CorrectModal url={`${url}/receipts/${correcting.productionReceiptId}`} receipt={correcting}
                                    onClose={() => setCorrecting(null)} />}
+      {confirming && order && <ConfirmModal url={url} order={order} onClose={() => setConfirming(false)} />}
       {receiving && data && <ReceiveModal url={url} items={data.items} locations={adjustLocations} onClose={() => setReceiving(false)} />}
     </>
   )
@@ -176,6 +182,21 @@ function CorrectModal({ url, receipt, onClose }: { url: string; receipt: Receipt
         창고 재고 {Number(ok || 0) - receipt.receivedQty >= 0 ? '+' : ''}{Number(ok || 0) - receipt.receivedQty}개.
         이미 판매·출고돼서 창고 재고가 모자라면 줄일 수 없어요.
       </p>
+    </FormModal>
+  )
+}
+
+// 공장 확인: 발주서 엑셀을 보낸 뒤 공장이 회신한 납기일을 기록 (지연 판단 기준이 됨)
+function ConfirmModal({ url, order, onClose }: { url: string; order: ProductionOrder; onClose: () => void }) {
+  const [date, setDate] = useState(order.confirmedDate ?? order.expectedDate ?? today())
+  const save = useMutation({
+    mutationFn: () => api.post(`${url}/confirm`, { confirmedDate: date }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['/production-orders'] }); onClose() },
+  })
+  return (
+    <FormModal title="공장 확인" onClose={onClose} onSubmit={() => save.mutate()} saving={save.isPending} error={save.error} submitLabel="확인">
+      <p className="help-text">공장이 발주서를 확인하고 알려준 납기일을 입력하세요. 이 날짜가 지나면 지연으로 표시돼요.</p>
+      <Input label="확정 납기일" type="date" required value={date} onChange={(e) => setDate(e.target.value)} />
     </FormModal>
   )
 }
