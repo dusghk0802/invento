@@ -22,6 +22,10 @@ public class ProductController {
     @GetMapping
     public List<Response> findAll(@ModelAttribute Search search) { return service.findAll(search); }
 
+    // 바코드 스캔 조회. 예: GET /api/admin/products/barcode/8801234567890
+    @GetMapping("/barcode/{barcode}")
+    public Response findByBarcode(@PathVariable String barcode) { return service.findByBarcode(barcode); }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Response create(@Valid @RequestBody Request request) { return service.create(request); }

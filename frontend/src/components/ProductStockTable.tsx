@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { Badge, Button, FormModal, Input, PageHeader, Select, Table, Toolbar, type Column } from './ui'
+import { Badge, Barcode, Button, FormModal, Input, Modal, PageHeader, Select, Table, Toolbar, type Column } from './ui'
 import { api, queryClient, useGet } from '../lib/api'
 import { useStockChannel, type StockLocation } from './StockChannel'
 import { AdjustModal, HistoryModal } from './StockModals'
@@ -24,6 +24,7 @@ type Product = {
   sellingPrice: number
   releaseDate: string | null
   boxQty: number | null // 박스 입수량
+  barcode: string | null // 포장 바코드 (없으면 라벨은 상품번호로)
   stocks: Stock[]
 }
 type Series = { seriesId: number; seriesName: string; active: boolean }
@@ -44,6 +45,7 @@ export function ProductStockTable({ itemKind, section }: { itemKind: ItemKind; s
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
   const [adjusting, setAdjusting] = useState<Product | null>(null)
   const [history, setHistory] = useState<Product | null>(null)
+  const [label, setLabel] = useState<Product | null>(null)
 
   const series = useGet<Series[]>('/series')
   const types = useGet<ProductType[]>('/product-types')
@@ -105,6 +107,7 @@ export function ProductStockTable({ itemKind, section }: { itemKind: ItemKind; s
         <div className="row-actions">
           {canAdjust && adjustLocations.length > 0 && <Button variant="ghost" size="sm" onClick={() => setAdjusting(p)}>재고 조정</Button>}
           <Button variant="ghost" size="sm" onClick={() => setHistory(p)}>이력</Button>
+          <Button variant="ghost" size="sm" onClick={() => setLabel(p)}>바코드</Button>
           {isOwner && <Button variant="secondary" size="sm" onClick={() => setEditing(p)}>수정</Button>}
         </div>
       ),
@@ -142,6 +145,7 @@ export function ProductStockTable({ itemKind, section }: { itemKind: ItemKind; s
                                  url="/stocks/adjust" target={{ productId: adjusting.productId }} invalidate="/products"
                                  onClose={() => setAdjusting(null)} />}
       {history && <HistoryModal name={history.productName} params={{ productId: history.productId }} onClose={() => setHistory(null)} />}
+      {label && <LabelModal product={label} onClose={() => setLabel(null)} />}
     </>
   )
 }
@@ -155,6 +159,7 @@ function ProductModal({ product, itemKind, noun, series, types, onClose }: {
   const [form, setForm] = useState({
     itemKind: product?.itemKind ?? itemKind, // 구분은 화면으로 정해짐 (상품 화면 = 재고품, 증정품 화면 = 특전)
     productCode: product?.productCode ?? '',
+    barcode: product?.barcode ?? '',
     productName: product?.productName ?? '',
     seriesId: product?.seriesId ? String(product.seriesId) : '',
     productTypeId: product ? String(product.productTypeId) : '',
@@ -221,6 +226,8 @@ function ProductModal({ product, itemKind, noun, series, types, onClose }: {
                                         onClick={() => window.confirm(`이 ${noun}을 삭제할까요?`) && remove.mutate()}>삭제</Button>}>
       <Input label={`${noun}명`} required maxLength={200} value={form.productName} onChange={(e) => set({ productName: e.target.value })} />
       <Input label={`${noun}번호`} required maxLength={50} value={form.productCode} onChange={(e) => set({ productCode: e.target.value })} />
+      <Input label="바코드" maxLength={50} placeholder="포장에 인쇄된 바코드 (없으면 비워두기 → 라벨은 번호로)" value={form.barcode}
+             onChange={(e) => set({ barcode: e.target.value })} />
       <Select label="시리즈" value={form.seriesId} placeholder="없음" onChange={(e) => pickOrCreate(e.target.value, 'series')}
               options={[...series.filter((s) => s.active || String(s.seriesId) === form.seriesId)
                 .map((s) => ({ value: s.seriesId, label: s.seriesName })), { value: NEW, label: '+ 새로 만들기' }]} />
@@ -237,5 +244,28 @@ function ProductModal({ product, itemKind, noun, series, types, onClose }: {
       <Input label="이미지 URL" maxLength={1000} value={form.imageUrl} onChange={(e) => set({ imageUrl: e.target.value })} />
       <Input label="상세 설명" value={form.description} onChange={(e) => set({ description: e.target.value })} />
     </FormModal>
+  )
+}
+
+// 바코드 라벨 인쇄 (JsBarcode). 포장 바코드가 없으면 상품번호로 만들어서 계산 화면에서 그대로 스캔됨
+function LabelModal({ product, onClose }: { product: Product; onClose: () => void }) {
+  const [count, setCount] = useState('1')
+  const code = product.barcode ?? product.productCode
+  return (
+    <Modal open width={560} title={`바코드 라벨 · ${product.productName}`} onClose={onClose}
+           footer={<><Button variant="secondary" onClick={onClose}>닫기</Button><Button onClick={() => window.print()}>인쇄</Button></>}>
+      <div className="form-stack">
+        <Input label="장수" type="number" min={1} max={100} value={count} onChange={(e) => setCount(e.target.value)} />
+        <div className="print-area label-sheet">
+          {Array.from({ length: Math.min(Math.max(Number(count) || 1, 1), 100) }, (_, i) => (
+            <div key={i} className="label">
+              <div>{product.productName}</div>
+              <Barcode value={code} />
+              <div>{won(product.sellingPrice)}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Modal>
   )
 }

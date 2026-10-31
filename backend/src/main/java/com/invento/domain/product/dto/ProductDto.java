@@ -18,6 +18,7 @@ public class ProductDto {
     public record Request(
             @NotNull ItemKind itemKind,
             @NotBlank @Size(max = 50) String productCode,
+            @Size(max = 50) String barcode,
             Long seriesId,
             @NotNull Long productTypeId,
             @NotBlank @Size(max = 200) String productName,
@@ -43,14 +44,14 @@ public class ProductDto {
     }
 
     // costPrice는 사장이 아니면 null → JSON에서 아예 빠짐
-    public record Response(Long productId, ItemKind itemKind, String productCode, Long seriesId, String seriesName,
+    public record Response(Long productId, ItemKind itemKind, String productCode, String barcode, Long seriesId, String seriesName,
                            Long productTypeId, String productTypeName, String productName, String imageUrl,
                            String description, boolean shopVisible,
                            @JsonInclude(JsonInclude.Include.NON_NULL) Long costPrice,
                            long sellingPrice, LocalDate releaseDate, Integer boxQty, List<StockResponse> stocks) {
         public static Response of(Product p, List<ProductStock> stocks, boolean showCost) {
             var series = p.getSeries();
-            return new Response(p.getProductId(), p.getItemKind(), p.getProductCode(),
+            return new Response(p.getProductId(), p.getItemKind(), p.getProductCode(), p.getBarcode(),
                     series == null ? null : series.getSeriesId(), series == null ? null : series.getSeriesName(),
                     p.getProductType().getProductTypeId(), p.getProductType().getProductTypeName(),
                     p.getProductName(), p.getImageUrl(), p.getDescription(), p.isShopVisible(),

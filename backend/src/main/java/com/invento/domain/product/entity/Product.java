@@ -23,6 +23,7 @@ public class Product extends BaseEntity {
     @Id @GeneratedValue(strategy = IDENTITY) private Long productId;
     @Enumerated(STRING) @Column(nullable = false) private ItemKind itemKind;
     @Column(nullable = false, unique = true, length = 50) private String productCode; // 삭제된 상품의 번호도 재사용 불가
+    @Column(unique = true, length = 50) private String barcode; // 포장에 인쇄된 바코드 (EAN-13 등). 없으면 null
     @ManyToOne(fetch = LAZY) @JoinColumn(name = "series_id") private Series series;
     @ManyToOne(fetch = LAZY, optional = false) @JoinColumn(name = "product_type_id") private ProductType productType;
     @Column(nullable = false, length = 200) private String productName;
@@ -35,11 +36,12 @@ public class Product extends BaseEntity {
     private Integer boxQty; // 박스 입수량 (매장 출고는 박스 단위). 낱개만 다루면 null
     private LocalDateTime deletedAt; // Soft Delete
 
-    public void update(ItemKind itemKind, String productCode, Series series, ProductType productType, String productName,
+    public void update(ItemKind itemKind, String productCode, String barcode, Series series, ProductType productType, String productName,
                        String imageUrl, String description, boolean shopVisible, long costPrice, long sellingPrice,
                        LocalDate releaseDate, Integer boxQty) {
         this.itemKind = itemKind;
         this.productCode = productCode;
+        this.barcode = barcode;
         this.series = series;
         this.productType = productType;
         this.productName = productName;

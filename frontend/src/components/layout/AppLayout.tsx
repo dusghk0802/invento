@@ -30,10 +30,11 @@ const menuGroups: MenuGroup[] = [
     icon: ShoppingCart,
     dropdown: true,
     items: [
-      { to: '/admin/store-sales', label: '매장판매', roles: ['OWNER', 'STORE'] },
+      { to: '/admin/pos', label: 'POS', roles: ['OWNER', 'STORE'] }, // 계산대 화면
+      { to: '/admin/store-sales', label: '매장판매내역', roles: ['OWNER', 'STORE'] }, // 매장 판매 내역
       // 창고 직원은 출고할 상품 확인용 조회만
-      { to: '/admin/online-sales', label: '온라인판매', roles: ['OWNER', 'FULFILLMENT', 'WAREHOUSE'] },
-      { to: '/admin/bulk-sales', label: '대량판매', roles: ['OWNER', 'FULFILLMENT'] },
+      { to: '/admin/online-sales', label: '온라인판매내역', roles: ['OWNER', 'FULFILLMENT', 'WAREHOUSE'] },
+      { to: '/admin/bulk-sales', label: '대량판매내역', roles: ['OWNER', 'FULFILLMENT'] },
     ],
   },
   {

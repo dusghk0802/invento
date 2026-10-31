@@ -23,7 +23,7 @@ public class ProductRepositoryImpl implements ProductRepositoryCustom {
         BooleanBuilder where = new BooleanBuilder(product.deletedAt.isNull());
         if (s.keyword() != null && !s.keyword().isBlank()) {
             String k = s.keyword().trim();
-            where.and(product.productName.contains(k).or(product.productCode.contains(k)));
+            where.and(product.productName.contains(k).or(product.productCode.contains(k)).or(product.barcode.eq(k)));
         }
         if (s.seriesId() != null) where.and(product.series.seriesId.eq(s.seriesId()));
         if (s.productTypeId() != null) where.and(product.productType.productTypeId.eq(s.productTypeId()));

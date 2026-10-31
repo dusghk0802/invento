@@ -48,6 +48,9 @@ public class SecurityConfig {
             "/api/admin/transfers/**"
     };
 
+    // 매장 판매(영수증): 사장 + 매장 직원
+    private static final String[] STORE_SALE = {"/api/admin/store-sales/**"};
+
     // 재고 조정·최소수량: 사장 + 매장·창고 직원 (자기 위치인지는 StockService에서 확인)
     private static final String[] STOCK_WRITE = {
             "/api/admin/stocks/adjust", "/api/admin/stocks/minimum"
@@ -67,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/admin/suppliers/**").authenticated()
                         .requestMatchers(PRODUCTION).hasAnyRole("OWNER", "WAREHOUSE")
                         .requestMatchers(PACKAGING).hasAnyRole("OWNER", "FULFILLMENT")
+                        .requestMatchers(STORE_SALE).hasAnyRole("OWNER", "STORE")
                         .requestMatchers(TRANSFER).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .requestMatchers(STOCK_WRITE).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .anyRequest().authenticated())

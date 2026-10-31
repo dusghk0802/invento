@@ -8,12 +8,14 @@ import GroupBuysPage from './pages/GroupBuysPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import OrdersPage from './pages/OrdersPage'
 import PackagingPage from './pages/PackagingPage'
+import PosPage from './pages/PosPage'
 import ProductionOrderDetailPage from './pages/ProductionOrderDetailPage'
 import ProductionOrdersPage from './pages/ProductionOrdersPage'
 import LocationsPage from './pages/LocationsPage'
 import ProductsPage from './pages/ProductsPage'
 import SalesSitesPage from './pages/SalesSitesPage'
 import ShippingMethodsPage from './pages/ShippingMethodsPage'
+import StoreSalesPage from './pages/StoreSalesPage'
 import SuppliersPage from './pages/SuppliersPage'
 import TransferDetailPage from './pages/TransferDetailPage'
 import TransfersPage from './pages/TransfersPage'
@@ -37,6 +39,8 @@ export default function App() {
         <Route path="bulk-sales/:groupBuyId" element={<GroupBuyDetailPage />} />
         <Route path="production-orders" element={<ProductionOrdersPage />} />
         <Route path="production-orders/:productionOrderId" element={<ProductionOrderDetailPage />} />
+        <Route path="pos" element={<PosPage />} />
+        <Route path="store-sales" element={<StoreSalesPage />} />
         <Route path="transfers" element={<TransfersPage />} />
         <Route path="transfers/:stockTransferId" element={<TransferDetailPage />} />
 

@@ -43,6 +43,15 @@ public class ProductService {
         return products.stream().map(p -> Response.of(p, stocks.getOrDefault(p.getProductId(), List.of()), owner)).toList();
     }
 
+    // 바코드 스캔: 포장 바코드 → 없으면 상품번호(자체 라벨은 상품번호로 인쇄)로 찾기 + 볼 수 있는 위치의 재고
+    @Transactional(readOnly = true)
+    public Response findByBarcode(String code) {
+        Product p = repo.findByBarcodeAndDeletedAtIsNull(code).or(() -> repo.findByProductCodeAndDeletedAtIsNull(code))
+                .orElseThrow(() -> new BusinessException(BARCODE_NOT_FOUND));
+        var stocks = stockService.groupVisible(stockRepo.findByProductProductIdIn(List.of(p.getProductId())), s -> p.getProductId());
+        return Response.of(p, stocks.getOrDefault(p.getProductId(), List.of()), AuthUtils.isOwner());
+    }
+
     public Response create(Request r) {
         if (repo.existsByProductCode(r.productCode())) throw new BusinessException(DUPLICATE_PRODUCT_CODE);
         return Response.of(repo.save(fill(Product.builder().build(), r)), List.of(), true);
@@ -62,11 +71,13 @@ public class ProductService {
         return product;
     }
 
+    private String blankToNull(String s) { return s == null || s.isBlank() ? null : s.trim(); }
+
     // 등록·수정 공통: 요청 값을 엔티티에 채움
     private Product fill(Product p, Request r) {
         Series series = r.seriesId() == null ? null
                 : seriesRepo.findById(r.seriesId()).orElseThrow(() -> new BusinessException(SERIES_NOT_FOUND));
-        p.update(r.itemKind(), r.productCode(), series, productTypeRepo.getOrThrow(r.productTypeId()), r.productName(),
+        p.update(r.itemKind(), r.productCode(), blankToNull(r.barcode()), series, productTypeRepo.getOrThrow(r.productTypeId()), r.productName(),
                 r.imageUrl(), r.description(), r.shopVisible(), r.costPrice(), r.sellingPrice(), r.releaseDate(), r.boxQty());
         return p;
     }
