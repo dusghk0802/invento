@@ -26,6 +26,7 @@ import static java.util.stream.Collectors.groupingBy;
 
 import static com.invento.domain.location.entity.LocationType.WAREHOUSE;
 import static com.invento.domain.stock.entity.StockMovementType.ADJUST;
+import static com.invento.domain.stock.entity.StockMovementType.PURCHASE_IN;
 import static com.invento.global.exception.ErrorCode.FORBIDDEN_LOCATION;
 import static com.invento.global.exception.ErrorCode.INVALID_QUANTITY;
 
@@ -62,6 +63,11 @@ public class StockService {
     public void adjustPackaging(PackagingAdjustRequest r) {
         checkLocation(r.locationId());
         changePackaging(r.packagingId(), r.locationId(), ADJUST, r.quantity(), r.reason(), null, null, r.memo());
+    }
+
+    public void purchasePackaging(PackagingPurchaseRequest r) {
+        checkLocation(r.locationId());
+        changePackaging(r.packagingId(), r.locationId(), PURCHASE_IN, r.quantity(), null, null, null, r.memo());
     }
 
     public void changeMinimum(MinimumRequest r) {

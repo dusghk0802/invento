@@ -2,6 +2,7 @@ package com.invento.domain.stock.entity;
 
 public enum StockMovementType {
     PRODUCTION_IN,  // 공장 입고 (+), 입고 수량 수정 시 차이만큼 (+/-)
+    PURCHASE_IN,    // 구매 입고 (+) 포장재처럼 직접 사 온 것
     TRANSFER_OUT,   // 재고 이동 출발 (-)
     TRANSFER_IN,    // 재고 이동 도착 (+)
     SALE_OUT,       // 판매 출고 (-)

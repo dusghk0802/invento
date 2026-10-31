@@ -4,6 +4,7 @@ import com.invento.domain.stock.entity.AdjustReason;
 import com.invento.domain.stock.entity.StockMovement;
 import com.invento.domain.stock.entity.StockMovementType;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 
@@ -33,6 +34,10 @@ public class StockDto {
             @NotNull AdjustReason reason,
             @Size(max = 500) String memo) {
     }
+
+    // 포장재 구매 입고 (등록할 때 초기 수량도 이걸로)
+    public record PackagingPurchaseRequest(@NotNull Long packagingId, @NotNull Long locationId,
+                                           @NotNull @Positive Integer quantity, @Size(max = 500) String memo) {}
 
     public record PackagingMinimumRequest(
             @NotNull Long packagingId,

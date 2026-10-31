@@ -25,9 +25,9 @@ public class StockMovement {
     @ManyToOne(fetch = LAZY) @JoinColumn(name = "location_id") private Location location; // 재고가 바뀐 위치 (상품·포장재 모두)
     @Enumerated(STRING) @Column(nullable = false) private StockItemType itemType;
     @Column(nullable = false) private Long itemId; // itemType에 따라 상품 ID / 포장재 ID
-    @Enumerated(STRING) @Column(nullable = false) private StockMovementType movementType;
+    @Enumerated(STRING) @Column(nullable = false, columnDefinition = "varchar(30)") private StockMovementType movementType;
     @Column(nullable = false) private int quantity; // + 입고·도착·복원, - 출고
-    @Enumerated(STRING) private AdjustReason adjustReason; // ADJUST일 때만
+    @Enumerated(STRING) @Column(columnDefinition = "varchar(30)") private AdjustReason adjustReason; // ADJUST일 때만
     @Column(length = 30) private String refType; // 변동 원인 (PRODUCTION_RECEIPT, ORDER_ITEM 등), 수동이면 null
     private Long refId;
     @Column(length = 500) private String memo;

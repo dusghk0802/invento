@@ -30,6 +30,9 @@ public class StockController {
         service.adjustPackaging(request);
     }
 
+    @PostMapping("/packaging/purchase")
+    public void purchasePackaging(@Valid @RequestBody PackagingPurchaseRequest request) { service.purchasePackaging(request); }
+
     @PutMapping("/packaging/minimum")
     public void changePackagingMinimum(@Valid @RequestBody PackagingMinimumRequest request) {
         service.changePackagingMinimum(request);

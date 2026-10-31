@@ -45,7 +45,6 @@ export default function GiftsPage() {
         <Toolbar actions={isOwner && <Button onClick={() => setEditing('new')}>+ 추가</Button>}>
           <h2 className="section-title">증정 규칙</h2>
         </Toolbar>
-        <p className="help-text">상품 합계가 조건 이상이면 가장 높은 구간 하나만 적용돼요. 대상 상품종류 안에서 주문 처리할 때 직원이 상품을 골라요.</p>
         <Table columns={ruleColumns} rows={rules.data} rowKey={(r) => r.giftRuleId} loading={rules.isPending}
                emptyText="등록된 증정 규칙이 없습니다." />
       </div>
