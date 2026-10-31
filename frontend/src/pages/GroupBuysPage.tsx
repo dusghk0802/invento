@@ -17,7 +17,7 @@ const columns: Column<GroupBuy>[] = [
   { key: 'groupBuyName', title: '시리즈명', render: (g) => <strong>{g.groupBuyName}</strong> },
   { key: 'purchaseDate', title: '구매일자' },
   { key: 'releaseDate', title: '발매일' },
-  { key: 'forwardingArrivalDate', title: '배대지 도착일자' },
+  { key: 'forwardingArrivalDate', title: '도착일자' },
   { key: 'shippingStartDate', title: '배송시작일자' },
   { key: 'shippingType', title: '배송유형', render: (g) => g.shippingType && <Badge tone={tagTone(g.shippingType)}>{g.shippingType}</Badge> },
 ]

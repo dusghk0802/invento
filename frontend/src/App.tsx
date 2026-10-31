@@ -7,6 +7,7 @@ import GroupBuyDetailPage from './pages/GroupBuyDetailPage'
 import GroupBuysPage from './pages/GroupBuysPage'
 import OrderDetailPage from './pages/OrderDetailPage'
 import OrdersPage from './pages/OrdersPage'
+import PackagingPage from './pages/PackagingPage'
 import LocationsPage from './pages/LocationsPage'
 import ProductsPage from './pages/ProductsPage'
 import SalesSitesPage from './pages/SalesSitesPage'
@@ -27,6 +28,7 @@ export default function App() {
         <Route path="online-sales" element={<OrdersPage />} />
         <Route path="online-sales/:orderId" element={<OrderDetailPage />} />
         <Route path="gifts" element={<GiftsPage />} />
+        <Route path="packaging" element={<PackagingPage />} />
         <Route path="bulk-sales" element={<GroupBuysPage />} />
         <Route path="bulk-sales/:groupBuyId" element={<GroupBuyDetailPage />} />
 

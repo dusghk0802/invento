@@ -25,12 +25,22 @@ public class SecurityConfig {
     private static final String[] OWNER_WRITE = {
             "/api/admin/products/**", "/api/admin/series/**", "/api/admin/product-types/**",
             "/api/admin/gift-rules/**", "/api/admin/suppliers/**", "/api/admin/sales-sites/**",
-            "/api/admin/shipping-methods/**"
+            "/api/admin/shipping-methods/**", "/api/admin/locations/**"
     };
 
-    // 사장 전용 (직원 계정, 활동 로그, 위치 관리)
+    // 사장 전용 (직원 계정, 활동 로그)
     private static final String[] OWNER_ONLY = {
-            "/api/admin/admins/**", "/api/admin/activity-logs/**", "/api/admin/locations/**"
+            "/api/admin/admins/**", "/api/admin/activity-logs/**"
+    };
+
+    // 포장재 관리 (목록·등록·수정·재고 조정): 사장 + 출고 직원
+    private static final String[] PACKAGING = {
+            "/api/admin/packaging/**", "/api/admin/stocks/packaging/**"
+    };
+
+    // 재고 조정·최소수량: 사장 + 매장·창고 직원 (자기 위치인지는 StockService에서 확인)
+    private static final String[] STOCK_WRITE = {
+            "/api/admin/stocks/adjust", "/api/admin/stocks/minimum"
     };
 
     // 관리자 백오피스 API(/api/admin/**) 전용 보안 설정. 쇼핑몰(/api/shop/**)은 나중에 별도 체인으로 분리
@@ -44,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(OWNER_ONLY).hasRole("OWNER")
                         .requestMatchers(HttpMethod.GET, OWNER_WRITE).authenticated()
                         .requestMatchers(OWNER_WRITE).hasRole("OWNER")
+                        .requestMatchers(PACKAGING).hasAnyRole("OWNER", "FULFILLMENT")
+                        .requestMatchers(STOCK_WRITE).hasAnyRole("OWNER", "STORE", "WAREHOUSE")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
                         .loginProcessingUrl("/api/admin/auth/login")
