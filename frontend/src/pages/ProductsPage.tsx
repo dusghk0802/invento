@@ -1,5 +1,5 @@
 import { Badge, Button, PageHeader, Table, type Column } from '../components/ui'
-import { useIsSuper } from '../lib/auth'
+import { useIsOwner } from '../lib/auth'
 import { won } from '../lib/format'
 
 // 상품 API 응답 모양 (3단계 백엔드에서 이 형태로 만들 예정)
@@ -45,11 +45,11 @@ const columns: Column<Product>[] = [
 ]
 
 export default function ProductsPage() {
-  const isSuper = useIsSuper()
+  const isOwner = useIsOwner()
 
   return (
     <>
-      <PageHeader title="상품재고" actions={isSuper && <Button>새로 만들기</Button>} />
+      <PageHeader title="상품재고" actions={isOwner && <Button>새로 만들기</Button>} />
       {/* TODO: 상품 API 연결 후 rows에 데이터 전달 */}
       <Table columns={columns} rows={[]} rowKey={(p) => p.productId} emptyText="등록된 상품이 없습니다." />
     </>

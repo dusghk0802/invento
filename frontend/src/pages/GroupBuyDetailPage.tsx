@@ -53,7 +53,7 @@ export default function GroupBuyDetailPage() {
     <>
       <PageHeader
         title={groupBuy?.groupBuyName ?? '공동구매'}
-        actions={<Button variant="secondary" onClick={() => navigate('/group-buys')}>목록</Button>}
+        actions={<Button variant="secondary" onClick={() => navigate('/admin/group-buys')}>목록</Button>}
       />
 
       <Card className="page-section">

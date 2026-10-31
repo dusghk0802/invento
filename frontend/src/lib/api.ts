@@ -1,7 +1,7 @@
 import axios, { isAxiosError } from 'axios'
 import { QueryClient } from '@tanstack/react-query'
 
-export const api = axios.create({ baseURL: '/api' })
+export const api = axios.create({ baseURL: '/api/admin' })
 
 export const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -9,8 +9,8 @@ export const queryClient = new QueryClient({
 
 // 세션이 끊기면(401) 로그인 화면으로 이동
 api.interceptors.response.use(undefined, (error) => {
-  if (isAxiosError(error) && error.response?.status === 401 && location.pathname !== '/login') {
-    location.href = '/login'
+  if (isAxiosError(error) && error.response?.status === 401 && location.pathname !== '/admin/login') {
+    location.href = '/admin/login'
   }
   return Promise.reject(error)
 })

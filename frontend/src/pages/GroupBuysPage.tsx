@@ -33,7 +33,7 @@ export default function GroupBuysPage() {
         columns={columns}
         rows={[]}
         rowKey={(g) => g.groupBuyId}
-        onRowClick={(g) => navigate(`/group-buys/${g.groupBuyId}`)}
+        onRowClick={(g) => navigate(`/admin/group-buys/${g.groupBuyId}`)}
         emptyText="등록된 공동구매가 없습니다."
       />
     </>

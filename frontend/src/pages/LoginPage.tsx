@@ -14,7 +14,7 @@ export default function LoginPage() {
       }),
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: ['me'] })
-      navigate('/products')
+      navigate('/admin/products')
     },
   })
 

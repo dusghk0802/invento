@@ -52,7 +52,7 @@ export default function OrdersPage() {
         columns={columns}
         rows={[]}
         rowKey={(o) => o.orderId}
-        onRowClick={(o) => navigate(`/orders/${o.orderId}`)}
+        onRowClick={(o) => navigate(`/admin/orders/${o.orderId}`)}
         emptyText="등록된 주문이 없습니다."
       />
     </>

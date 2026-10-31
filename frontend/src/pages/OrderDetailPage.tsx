@@ -39,7 +39,7 @@ export default function OrderDetailPage() {
     <>
       <PageHeader
         title={`주문서 ${orderNo(orderId)}`}
-        actions={<Button variant="secondary" onClick={() => navigate('/orders')}>목록</Button>}
+        actions={<Button variant="secondary" onClick={() => navigate('/admin/orders')}>목록</Button>}
       />
 
       <Card className="page-section">
@@ -63,7 +63,7 @@ export default function OrderDetailPage() {
         columns={itemColumns}
         rows={items}
         rowKey={(i) => i.orderItemId}
-        onRowClick={(i) => navigate(`/products/${i.productId}`)}
+        onRowClick={(i) => navigate(`/admin/products/${i.productId}`)}
         emptyText="주문한 상품이 없습니다."
       />
     </>

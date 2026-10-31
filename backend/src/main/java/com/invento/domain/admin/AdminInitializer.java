@@ -21,8 +21,8 @@ public class AdminInitializer {
             repo.save(Admin.builder()
                     .loginId(loginId)
                     .passwordHash(encoder.encode(password))
-                    .adminName("관리자")
-                    .role(AdminRole.SUPER_ADMIN)
+                    .adminName("사장")
+                    .role(AdminRole.OWNER)
                     .build());
         };
     }

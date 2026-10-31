@@ -21,24 +21,30 @@ import java.time.LocalDateTime;
 @Configuration
 public class SecurityConfig {
 
-    private static final String[] SUPER_ADMIN_WRITE = {
-            "/api/products/**", "/api/series/**", "/api/gift-rules/**", "/api/purchase-sites/**"
+    // 조회는 모든 직원, 등록·수정·삭제는 사장만
+    private static final String[] OWNER_WRITE = {
+            "/api/admin/products/**", "/api/admin/series/**", "/api/admin/gift-rules/**", "/api/admin/suppliers/**"
     };
 
+    // 사장 전용 (직원 계정, 활동 로그, 위치 관리)
+    private static final String[] OWNER_ONLY = {
+            "/api/admin/admins/**", "/api/admin/activity-logs/**", "/api/admin/locations/**"
+    };
+
+    // 관리자 백오피스 API(/api/admin/**) 전용 보안 설정. 쇼핑몰(/api/shop/**)은 나중에 별도 체인으로 분리
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AdminRepository repo) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable)
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http, AdminRepository repo) throws Exception {
+        http.securityMatcher("/api/admin/**")
+                .csrf(AbstractHttpConfigurer::disable)
                 // 위에서부터 먼저 맞는 규칙이 적용됨
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login").permitAll()
-                        // 시스템: SUPER_ADMIN 전용
-                        .requestMatchers("/api/admins/**", "/api/activity-logs/**").hasRole("SUPER_ADMIN")
-                        // 상품(특전 포함), 증정 규칙, 구매사이트: 조회는 모두, 등록·수정·삭제는 SUPER_ADMIN
-                        .requestMatchers(HttpMethod.GET, SUPER_ADMIN_WRITE).authenticated()
-                        .requestMatchers(SUPER_ADMIN_WRITE).hasRole("SUPER_ADMIN")
+                        .requestMatchers("/api/admin/auth/login").permitAll()
+                        .requestMatchers(OWNER_ONLY).hasRole("OWNER")
+                        .requestMatchers(HttpMethod.GET, OWNER_WRITE).authenticated()
+                        .requestMatchers(OWNER_WRITE).hasRole("OWNER")
                         .anyRequest().authenticated())
                 .formLogin(form -> form
-                        .loginProcessingUrl("/api/auth/login")
+                        .loginProcessingUrl("/api/admin/auth/login")
                         .usernameParameter("loginId")
                         .successHandler((req, res, auth) -> repo.findByLoginId(auth.getName()).ifPresent(admin -> {
                             admin.setLastLoginAt(LocalDateTime.now());
@@ -46,7 +52,7 @@ public class SecurityConfig {
                         }))
                         .failureHandler((req, res, e) -> res.setStatus(HttpStatus.UNAUTHORIZED.value())))
                 .logout(logout -> logout
-                        .logoutUrl("/api/auth/logout")
+                        .logoutUrl("/api/admin/auth/logout")
                         .logoutSuccessHandler(new HttpStatusReturningLogoutSuccessHandler()))
                 .exceptionHandling(e -> e.authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)));
         return http.build();

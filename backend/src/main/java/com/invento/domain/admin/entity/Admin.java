@@ -1,5 +1,6 @@
 package com.invento.domain.admin.entity;
 
+import com.invento.domain.location.entity.Location;
 import com.invento.global.common.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,6 +30,11 @@ public class Admin extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AdminRole role;
+
+    // 담당 위치: 매장 직원=매장, 창고 직원=창고, 사장·출고 직원=NULL
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "location_id")
+    private Location location;
 
     @Builder.Default
     @Column(nullable = false)

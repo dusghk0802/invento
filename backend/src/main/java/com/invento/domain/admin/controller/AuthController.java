@@ -9,8 +9,8 @@ import java.util.Map;
 @RestController
 public class AuthController {
 
-    // role: 프론트에서 SUPER_ADMIN 전용 메뉴를 숨길 때 사용
-    @GetMapping("/api/auth/me")
+    // role: 프론트에서 역할별 메뉴·버튼을 보여줄 때 사용
+    @GetMapping("/api/admin/auth/me")
     public Map<String, String> me(Authentication auth) {
         String role = auth.getAuthorities().iterator().next().getAuthority().replace("ROLE_", "");
         return Map.of("loginId", auth.getName(), "role", role);
